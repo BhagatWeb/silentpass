@@ -1,0 +1,34 @@
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+.vercel/
+*.log
+issuer-cli/logs/
+verifier-ui/public/keys/
+verifier-ui/public/zkir/
+
+# Large generated ZK proving/verifier keys (regenerate with: npm run compact)
+contract/src/managed/**/keys/
+.env.local
+deployment.json
+verifier-ui/public/deployment.json
+*.mnemonic
+.mnemonic
+
+# secrets
+.env
+.env.*
+!.env.preprod
+!.env.preview
+server/.env
+website/dist/
+python/dist/
+python/*.egg-info/
+__pycache__/
+.venv/
+
+# deploy scripts contain mnemonic — never commit
+deploy.ps1
+deploy.bat
+deploy-join.ps1

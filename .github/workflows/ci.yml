@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build, typecheck, and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Compact compiler
+        run: |
+          npm install -g @midnight-ntwrk/compact-cli || true
+          # Fallback: check if compact is already available from npm workspaces
+          compactc --version 2>/dev/null || echo "compact compiler not available in CI (expected for test-only runs)"
+
+      - name: Compile Compact contract
+        run: |
+          if command -v compactc &> /dev/null; then
+            npm run compact --workspace silentpass-contract
+          else
+            echo "Skipping compact compile in CI — pre-compiled managed/ artifacts committed to repo."
+          fi
+
+      - name: Build contract bindings
+        run: npm run build --workspace silentpass-contract
+
+      - name: Build SDK
+        run: npm run build --workspace silentpass
+
+      - name: Typecheck CLI
+        run: npm run typecheck --workspace silentpass-cli
+
+      - name: Run crypto scheme tests
+        run: npm test --workspace silentpass
