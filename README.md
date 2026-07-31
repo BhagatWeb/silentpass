@@ -140,11 +140,12 @@ silentpass/
 
 ## 🌐 Live Deployment
 
-| Network | Contract Address |
+| Component | Status |
 | --- | --- |
-| Midnight Preprod | `1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba` |
+| Midnight Preprod Contract | Pending |
+| Frontend Deployment | Pending |
 
-The frontend application is configured for seamless deployment on platforms like Netlify (via the provided `netlify.toml`). 
+The frontend and smart contract deployment will be added after successful deployment to the Midnight Preprod network.
 
 ---
 
