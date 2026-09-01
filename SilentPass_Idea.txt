@@ -1,0 +1,56 @@
+PROJECT TITLE
+SilentPass: Premium Zero-Knowledge Identity & Access Verification
+
+SELECTED THEME
+Confidential Credentials — Prove a credential is valid without disclosing it
+
+SECONDARY THEMES
+Age / Eligibility Gate — Prove a threshold without revealing the underlying value
+Private Allowlist Access — Prove membership without revealing identity
+
+IDEA OVERVIEW
+Users online are constantly forced to hand over highly sensitive personal data—such as passports, driver's licenses, and exact birthdates—to dozens of different websites just to prove their age, residency, or uniqueness. This exposes users to massive identity theft risks and forces every application to become a honeypot of regulated, sensitive data.
+
+SilentPass is a premium, privacy-first identity verification venue built on Midnight. Users verify their real-world identity once with a trusted Issuer Authority and receive a reusable cryptographic credential that stays exclusively on their own device. When an application (the Venue) needs to verify a user, they simply request a cryptographic proof. Using Midnight's zero-knowledge capabilities, the user proves they satisfy the requirements (e.g., age over 18, unique human) without ever revealing their name, exact birthdate, or raw documents.
+
+The verifying app needs no wallet, no proof server, and receives zero user data—just a single cryptographic "verified" bit. SilentPass turns invasive identity checks into portable, zero-knowledge proofs, protecting users while allowing platforms to remain compliant without the liability of data collection.
+
+PROBLEM STATEMENT
+Current online verification systems require users to repeatedly submit highly sensitive identity documents and exact personal information to disparate web applications. This creates enormous privacy risks, increases the likelihood of data breaches, and places a heavy regulatory and security burden on organizations that are forced to securely store this confidential information.
+
+PROPOSED SOLUTION
+Build a premium zero-knowledge identity credential primitive where users can prove they meet access criteria without revealing their personal documents or exact attributes. Midnight smart contracts will verify these cryptographic proofs while ensuring that only a boolean verification result is ever disclosed to the verifying application.
+
+CORE FEATURES
+* Privacy-preserving zero-knowledge identity and access verification
+* Zero-knowledge threshold proofs for age and identity matching
+* Confidential digital credentials issued by trusted authorities
+* Minimal data disclosure through cryptographic proofs (only a boolean result is shared)
+* Frictionless verification for apps (no wallet or proof server required by the verifier)
+* Reusable digital credentials for seamless onboarding across platforms
+
+WHY MIDNIGHT?
+Midnight enables users to prove statements about their data without revealing the data itself. Verifying applications only need to know whether an applicant satisfies the access criteria, not their exact birthdate, name, identity documents, or other sensitive personal information. This makes Midnight the perfect platform for building secure, privacy-preserving identity verification systems that protect user privacy while completely eliminating the liability of data collection for developers.
+
+PROGRAM ROADMAP & EXECUTION PLAN
+
+Level 1: New Moon (Setup & First Contract) — [COMPLETED]
+- Deliverables: Installed Midnight toolchain (compactc, proof server, Node 24), authored passport.compact with ledger state and private witnesses, generated managed circuits, deployed to Midnight Preprod (1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba), and documented public state vs private witness boundaries.
+
+Level 2: Waxing Crescent (Frontend Integration) — [COMPLETED]
+- Deliverables: Developed verifier-ui connecting to Lace / 1AM wallet via @midnight-ntwrk/dapp-connector-api, invoked verification circuits directly from the frontend, demonstrated observable privacy behavior (proving age threshold without exposing DOB), and prepared deployment configs.
+
+Level 3: First Quarter (Production-Grade dApp) — [COMPLETED]
+- Deliverables: Automated test suite with 10 cryptographic and boundary test cases, configured active CI/CD pipeline on GitHub Actions (.github/workflows/ci.yml), established comprehensive privacy model specifications, and aligned with the Confidential Credentials problem statement.
+
+Level 4: Waxing Gibbous (MVP Goes Live)
+- Deliverables: Live MVP hosted on public URL (Netlify / Cloudflare Pages), complete developer documentation, and public project profile.
+
+Level 5: Full Moon (Users & Feedback)
+- Deliverables: Active user feedback loop onboarding at least 50 Preprod users and third-party verifier demo integrations.
+
+Level 6: Supermoon (Mainnet Launch)
+- Deliverables: Deployment to Midnight Mainnet, production brand assets, and onboarding real-world identity venues.
+
+CHOOSE A CATEGORY
+Identity/credentials
