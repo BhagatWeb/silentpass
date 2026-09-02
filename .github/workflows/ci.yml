@@ -48,3 +48,6 @@ jobs:
       - name: Run crypto scheme tests
         run: npm test --workspace silentpass
 
+      - name: Build UI application
+        run: npm run build --workspace silentpass-app
+
