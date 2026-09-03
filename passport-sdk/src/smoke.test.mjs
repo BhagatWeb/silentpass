@@ -77,4 +77,29 @@ assert.equal(ageOk('2008-07-04', '2026-07-04', 18), true, 'exactly 18 today pass
 assert.equal(ageOk('2008-07-05', '2026-07-04', 18), false, 'one day short of 18 fails');
 ok('YYYYMMDD age predicate is exact at the boundary');
 
-console.log(`\n${passed}/6 crypto-scheme checks passed against the compiled contract.`);
+// 7. Subject binding: different subject public key produces different commitment
+const sk2 = randomBytes(32);
+const subject2 = pureCircuits.publicKey(sk2);
+const cSubject2 = pureCircuits.credentialCommitment(subject2, attrs, salt);
+assert.notEqual(toHex(c1), toHex(cSubject2), 'different subject key must change commitment');
+ok('subject binding: commitment is tied to holder public key');
+
+// 8. Country code binding: different country code changes attributes and commitment
+const cCountry = pureCircuits.credentialCommitment(
+  subject,
+  pureCircuits.attributesHash(birthDate, 840n, false, nh),
+  salt,
+);
+assert.notEqual(toHex(c1), toHex(cCountry), 'changing country code must change commitment');
+ok('country binding: changing country code alters commitment');
+
+// 9. Scoped nullifiers across different users: distinct subjects produce distinct nullifiers for same scope
+const scopeCommon = randomBytes(32);
+assert.notEqual(
+  toHex(pureCircuits.scopedNullifier(sk, scopeCommon)),
+  toHex(pureCircuits.scopedNullifier(sk2, scopeCommon)),
+  'different secret keys must produce distinct scoped nullifiers under same scope',
+);
+ok('scoped nullifier: collision-resistant across distinct holders in same scope');
+
+console.log(`\n${passed}/9 crypto-scheme checks passed against the compiled contract.`);
