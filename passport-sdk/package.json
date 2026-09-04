@@ -38,7 +38,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node src/smoke.test.mjs"
+    "test": "node src/smoke.test.mjs && node src/eligibility.test.mjs"
   },
   "dependencies": {
     "silentpass-contract": "^0.1.1"
