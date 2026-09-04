@@ -102,4 +102,10 @@ assert.notEqual(
 );
 ok('scoped nullifier: collision-resistant across distinct holders in same scope');
 
-console.log(`\n${passed}/9 crypto-scheme checks passed against the compiled contract.`);
+// 10. Multi-threshold age verification boundaries (21+ age gate)
+assert.equal(ageOk('2005-07-04', '2026-07-04', 21), true, 'exactly 21 today passes 21+ gate');
+assert.equal(ageOk('2005-07-05', '2026-07-04', 21), false, 'one day short of 21 fails 21+ gate');
+assert.equal(ageOk('2000-01-01', '2026-07-04', 21), true, '26yo passes 21+ gate');
+ok('multi-threshold age gate (21+) is exact at boundary');
+
+console.log(`\n${passed}/10 crypto-scheme checks passed against the compiled contract.`);
