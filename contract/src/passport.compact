@@ -163,6 +163,15 @@ export pure circuit credentialCommitment(
   ]);
 }
 
+// Pure circuit helper: evaluates country of residency match.
+export pure circuit isCountryMatch(
+  holderCountry: Uint<16>,
+  requiredCountry: Uint<16>
+): Boolean {
+  return holderCountry == requiredCountry;
+}
+
+
 // ===========================================================================
 // Internal: read every private attribute ONCE, recompute the holder's
 // commitment, prove it is a validly issued and unrevoked credential (without
