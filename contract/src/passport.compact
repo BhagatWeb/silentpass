@@ -163,6 +163,16 @@ export pure circuit credentialCommitment(
   ]);
 }
 
+// Pure circuit helper: evaluates YYYYMMDD age threshold boundary arithmetic.
+export pure circuit isAgeEligible(
+  birthDate: Uint<32>,
+  threshold: Uint<8>,
+  asOfDate: Uint<32>
+): Boolean {
+  const minBirthCutoff = (birthDate + ((threshold as Uint<32>) * 10000)) as Uint<64>;
+  return (asOfDate as Uint<64>) >= minBirthCutoff;
+}
+
 // Pure circuit helper: evaluates country of residency match.
 export pure circuit isCountryMatch(
   holderCountry: Uint<16>,
