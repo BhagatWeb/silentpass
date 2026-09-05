@@ -68,6 +68,12 @@ export struct IdentityVerification {
 }
 export ledger identityVerifications: Map<Bytes<32>, IdentityVerification>;
 
+// Country of residency verifications: sessionId -> verified country code.
+export struct ResidencyVerification {
+  countryCode: Uint<16>,
+}
+export ledger residencyVerifications: Map<Bytes<32>, ResidencyVerification>;
+
 // Attributes threaded out of the membership proof, so predicates evaluate the
 // SAME wires that were bound into the on-chain commitment.
 struct CredentialData {
@@ -330,8 +336,19 @@ export circuit proveUniqueHuman(sessionId: Bytes<32>, scope: Bytes<32>): [] {
 // --- attributes into the credential commitment, so enabling them is purely
 // --- additive): residency and accredited-investor predicates.
 
+// Prove country of residency: confirms holder's country matches `countryCode`
+// without disclosing birthdate, name, or secret key.
 export circuit proveResidency(sessionId: Bytes<32>, countryCode: Uint<16>): [] {
-  assert(false, "proveResidency is not implemented in this MVP");
+  const dSession = disclose(sessionId);
+  assert(!residencyVerifications.member(dSession), "session already used");
+
+  const cred = proveValidCredential();
+  assert(disclose(cred.country == countryCode), "residency country does not match");
+
+  residencyVerifications.insert(
+    dSession,
+    ResidencyVerification { countryCode: disclose(countryCode) }
+  );
 }
 
 export circuit proveAccredited(sessionId: Bytes<32>): [] {
