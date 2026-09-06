@@ -77,6 +77,15 @@ export ledger residencyVerifications: Map<Bytes<32>, ResidencyVerification>;
 // Accredited investor verifications: sessionId -> boolean.
 export ledger accreditedVerifications: Map<Bytes<32>, Boolean>;
 
+// Composite eligibility (age + residency + accreditation) in a single ZK proof.
+export struct EligibilityVerification {
+  threshold: Uint<8>,
+  asOfDate: Uint<32>,
+  countryCode: Uint<16>,
+  accredited: Boolean,
+}
+export ledger eligibilityVerifications: Map<Bytes<32>, EligibilityVerification>;
+
 // Attributes threaded out of the membership proof, so predicates evaluate the
 // SAME wires that were bound into the on-chain commitment.
 struct CredentialData {
@@ -365,3 +374,39 @@ export circuit proveAccredited(sessionId: Bytes<32>): [] {
 
   accreditedVerifications.insert(dSession, true);
 }
+
+// Prove composite eligibility: age + residency + accreditation in a single proof.
+export circuit proveEligibility(
+  sessionId: Bytes<32>,
+  threshold: Uint<8>,
+  asOfDate: Uint<32>,
+  requiredCountry: Uint<16>,
+  requireAccredited: Boolean
+): [] {
+  const dSession = disclose(sessionId);
+  assert(!eligibilityVerifications.member(dSession), "session already used");
+
+  const cred = proveValidCredential();
+
+  const minBirthCutoff = (cred.birthDate + ((threshold as Uint<32>) * 10000)) as Uint<64>;
+  assert(disclose((asOfDate as Uint<64>) >= minBirthCutoff), "age is below threshold");
+
+  if (requiredCountry > 0) {
+    assert(disclose(cred.country == requiredCountry), "country does not match requirement");
+  }
+
+  if (requireAccredited) {
+    assert(disclose(cred.accredited), "holder is not an accredited investor");
+  }
+
+  eligibilityVerifications.insert(
+    dSession,
+    EligibilityVerification {
+      threshold: disclose(threshold),
+      asOfDate: disclose(asOfDate),
+      countryCode: disclose(requiredCountry),
+      accredited: disclose(cred.accredited)
+    }
+  );
+}
+
