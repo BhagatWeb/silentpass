@@ -74,6 +74,9 @@ export struct ResidencyVerification {
 }
 export ledger residencyVerifications: Map<Bytes<32>, ResidencyVerification>;
 
+// Accredited investor verifications: sessionId -> boolean.
+export ledger accreditedVerifications: Map<Bytes<32>, Boolean>;
+
 // Attributes threaded out of the membership proof, so predicates evaluate the
 // SAME wires that were bound into the on-chain commitment.
 struct CredentialData {
@@ -351,6 +354,14 @@ export circuit proveResidency(sessionId: Bytes<32>, countryCode: Uint<16>): [] {
   );
 }
 
+// Prove accredited investor status: confirms accredited == true without
+// disclosing name, birthdate, or country.
 export circuit proveAccredited(sessionId: Bytes<32>): [] {
-  assert(false, "proveAccredited is not implemented in this MVP");
+  const dSession = disclose(sessionId);
+  assert(!accreditedVerifications.member(dSession), "session already used");
+
+  const cred = proveValidCredential();
+  assert(disclose(cred.accredited), "holder is not an accredited investor");
+
+  accreditedVerifications.insert(dSession, true);
 }
