@@ -163,7 +163,7 @@ export pure circuit attributesHash(
     pad(32, "zkpassport:attrs:v2"),
     (birthDate as Field) as Bytes<32>,
     (country as Field) as Bytes<32>,
-    (((accredited as Uint<0..1>) as Field)) as Bytes<32>,
+    ((accredited ? 1 : 0) as Field) as Bytes<32>,
     nameHash
   ]);
 }
@@ -273,6 +273,16 @@ export circuit addIssuer(newIssuer: Bytes<32>): [] {
   assert(disclose(callerPk == admin), "caller is not the admin");
   issuers.insert(disclose(newIssuer));
 }
+
+// Admin-only. Revokes an untrusted or compromised issuer's authorization.
+export circuit removeIssuer(issuerToRemove: Bytes<32>): [] {
+  const callerPk = publicKey(issuerSecretKey());
+  assert(disclose(callerPk == admin), "caller is not the admin");
+  assert(disclose(issuerToRemove != admin), "cannot remove the admin issuer");
+  assert(issuers.member(disclose(issuerToRemove)), "issuer is not registered");
+  issuers.remove(disclose(issuerToRemove));
+}
+
 
 // ===========================================================================
 // Holder circuits — the reusable predicates
