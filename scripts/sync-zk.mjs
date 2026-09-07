@@ -1,7 +1,7 @@
 // Copies the compiled ZK artifacts (keys + zkir) into verifier-ui/public so the
 // browser's FetchZkConfigProvider can fetch them from the app origin, both in
 // `vite dev` and in the built site.
-import { cpSync, existsSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, rmSync, mkdirSync, readdirSync, copyFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -40,3 +40,27 @@ for (const sub of ['keys', 'zkir']) {
     console.log(`synced ${sub} -> verifier-ui/public/${sub}`);
   }
 }
+
+// Also sync full managed tree to /managed so providers fetching from /managed find everything
+const fullManagedSrc = join(root, 'contract', 'src', 'managed');
+const fullManagedDest = join(publicDir, 'managed');
+if (existsSync(fullManagedSrc)) {
+  rmSync(fullManagedDest, { recursive: true, force: true });
+  cpSync(fullManagedSrc, fullManagedDest, { recursive: true });
+  console.log('synced managed -> verifier-ui/public/managed');
+  
+  // Also ensure /managed/zkir is available directly if fetched without /passport
+  const zkirSrc = join(managed, 'zkir');
+  const managedZkirDest = join(fullManagedDest, 'zkir');
+  if (existsSync(zkirSrc) && !existsSync(managedZkirDest)) {
+    cpSync(zkirSrc, managedZkirDest, { recursive: true });
+  }
+
+  const keysSrc = join(managed, 'keys');
+  const managedKeysDest = join(fullManagedDest, 'keys');
+  if (existsSync(keysSrc) && !existsSync(managedKeysDest)) {
+    cpSync(keysSrc, managedKeysDest, { recursive: true });
+  }
+}
+
+
