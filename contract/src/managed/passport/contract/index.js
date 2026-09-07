@@ -955,16 +955,7 @@ export class Contract {
                                                                         country_0,
                                                                         'passport.compact line 147 char 5'),
                                    __compactRuntime.convertFieldToBytes(32,
-                                                                        accredited_0
-                                                                        ?
-                                                                        ((t1) => {
-                                                                          if (t1 > 0n) {
-                                                                            throw new __compactRuntime.CompactError('passport.compact line 148 char 8: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 0');
-                                                                          }
-                                                                          return t1;
-                                                                        })(1n)
-                                                                        :
-                                                                        0n,
+                                                                        accredited_0 ? 1n : 0n,
                                                                         'passport.compact line 148 char 5'),
                                    nameHash_0]);
   }
