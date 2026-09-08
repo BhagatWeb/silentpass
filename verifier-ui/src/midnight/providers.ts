@@ -42,7 +42,7 @@ export interface WalletSession {
 }
 
 export const initializeWalletSession = async (): Promise<WalletSession> => {
-  const networkId = (import.meta.env.VITE_NETWORK_ID as string | undefined) ?? 'preprod';
+  const networkId = (import.meta.env.VITE_NETWORK_ID as string | undefined) ?? 'preview';
   const connectedAPI = await connectToWallet(networkId);
 
   const config = await connectedAPI.getConfiguration();
