@@ -1,11 +1,28 @@
 export const short = (s: string, n = 10): string =>
   s.length > 2 * n ? `${s.slice(0, n)}…${s.slice(-n)}` : s;
 
-export const EXPLORER = 'https://preprod.midnightexplorer.com/';
+export const getActiveNetwork = (): string => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('DEPLOYED_NETWORK_ID');
+    if (stored) return stored;
+  }
+  return import.meta.env.VITE_NETWORK_ID || 'preview';
+};
 
-/** Deep link to a contract on the preprod explorer (addresses are 0x-prefixed there). */
-export const contractUrl = (address: string): string =>
-  `https://preprod.midnightexplorer.com/contracts/0x${address}`;
+export const EXPLORER =
+  getActiveNetwork() === 'preview'
+    ? 'https://preview.midnightexplorer.com/'
+    : 'https://preprod.midnightexplorer.com/';
+
+/** Deep link to a contract on the midnight explorer. */
+export const contractUrl = (address: string): string => {
+  const isPreview = getActiveNetwork() === 'preview';
+  if (isPreview) {
+    return `https://preview.midnightexplorer.com/contracts/${address}`;
+  }
+  const clean = address.startsWith('0x') ? address : `0x${address}`;
+  return `https://preprod.midnightexplorer.com/contracts/${clean}`;
+};
 
 /** YYYYMMDD int (as stored on-chain) → human date. */
 export const fromYyyymmdd = (n: number | undefined): string => {
