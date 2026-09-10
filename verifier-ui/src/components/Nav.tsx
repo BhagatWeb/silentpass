@@ -15,6 +15,7 @@ export function Nav({ ctl }: { ctl: SilentPassController }) {
           <a href="#why">Why Midnight</a>
           <a href="#install">Install</a>
           <a href="/docs">Docs</a>
+          <a href="/admin" style={{ color: '#c084fc', fontWeight: 600 }}>Deploy / Admin</a>
         </nav>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {connected && session ? (
