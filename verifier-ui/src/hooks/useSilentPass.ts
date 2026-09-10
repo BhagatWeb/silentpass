@@ -19,9 +19,10 @@ export interface LogLine {
   at: string;
 }
 
-// The single canonical silentpass deployment on preprod. The demo verifies against
-// this one contract only; it never deploys a per-session contract.
-const DEPLOYED_CONTRACT = '1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba';
+import { getContractAddress } from '../config.js';
+
+// The canonical silentpass deployment on preprod/preview, or locally deployed contract.
+const DEPLOYED_CONTRACT = getContractAddress();
 // v2: the contract binds the name and adds proveIdentity, so credentials cached
 // from the older age-only contract must not be reused.
 const CREDFILE_KEY = 'zkpassport:credential-file:v2';
