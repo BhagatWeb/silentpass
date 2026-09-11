@@ -1,5 +1,5 @@
 /* Minimal line icons, currentColor, no emoji. */
-type P = { size?: number; className?: string };
+type P = { size?: number; className?: string; style?: React.CSSProperties };
 
 const base = (size: number): React.CSSProperties => ({
   display: 'inline-block',
@@ -9,8 +9,8 @@ const base = (size: number): React.CSSProperties => ({
   height: size,
 });
 
-export const Check = ({ size = 14, className }: P) => (
-  <svg viewBox="0 0 16 16" fill="none" style={base(size)} className={className} aria-hidden="true">
+export const Check = ({ size = 14, className, style }: P) => (
+  <svg viewBox="0 0 16 16" fill="none" style={{ ...base(size), ...style }} className={className} aria-hidden="true">
     <path d="M3.5 8.6l2.9 2.9L12.6 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
