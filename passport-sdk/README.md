@@ -34,7 +34,7 @@ import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 
 setNetworkId('preprod');
 
-const CONTRACT = '1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba';
+const CONTRACT = 'a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e';
 const verifier = Verifier.connect(CONTRACT);
 
 // 1. Issue a session id and hand it to the user's wallet flow.
@@ -102,10 +102,10 @@ issuance.
 
 ## Try it live
 
-A full working demo runs on Midnight preprod at [silentpass.vercel.app](https://silentpass.vercel.app).
+A full working demo runs on Midnight preprod at [silentpass-midnight.netlify.app](https://silentpass-midnight.netlify.app).
 Connect a wallet, verify a document, issue a credential, and prove your name and age with a single
 verified result. It runs against the single canonical deployment, contract
-[`1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba`](https://preprod.midnightexplorer.com/contracts/0x1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba).
+[`a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e`](https://preprod.midnightexplorer.com/contracts/a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e).
 See the [repository](https://github.com/ogsamrat/silentpass) for the end-to-end guide.
 
 Apache-2.0.

@@ -73,7 +73,7 @@ const main = async (): Promise<void> => {
       issuerSecretKey: toHex(issuerSecretKey),
       issuerPublicKey: 'n/a (join mode)',
       deployedAt: new Date().toISOString(),
-      explorer: `https://preprod.midnight.network/explorer/contract/${existingAddress}`,
+      explorer: `https://preprod.midnightexplorer.com/contracts/${existingAddress}`,
     };
     writeDeploymentFiles(deployment);
     logger.info('Done. deployment.json written — no re-deploy performed.');
@@ -106,7 +106,7 @@ const main = async (): Promise<void> => {
     issuerSecretKey: toHex(issuerSecretKey),
     issuerPublicKey: toHex((await import('silentpass-contract')).pureCircuits.publicKey(issuerSecretKey)),
     deployedAt: new Date().toISOString(),
-    explorer: `https://preprod.midnight.network/explorer/contract/${contractAddress}`,
+    explorer: `https://preprod.midnightexplorer.com/contracts/${contractAddress}`,
   };
   writeDeploymentFiles(deployment);
 

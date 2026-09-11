@@ -8,10 +8,11 @@ A zero-knowledge identity credential on [Midnight](https://midnight.network) des
 
 [![npm silentpass](https://img.shields.io/npm/v/silentpass?color=a855f7&label=silentpass&logo=npm)](https://www.npmjs.com/package/silentpass)
 [![npm silentpass-react](https://img.shields.io/npm/v/silentpass-react?color=a855f7&label=silentpass-react&logo=npm)](https://www.npmjs.com/package/silentpass-react)
-[![CI](https://github.com/BhagatWeb/silentpass/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/BhagatWeb/silentpass/actions/workflows/ci.yml)
-[![X Profile](https://img.shields.io/badge/X-@SilentPassZK-black?logo=x)](https://x.com/SilentPassZK)
+[![X Post](https://img.shields.io/badge/X-Launch_Post-black?logo=x)](https://x.com/amanrajbhagat11/status/2098406980679553426?s=20)
 [![license](https://img.shields.io/badge/license-Apache--2.0-111111)](LICENSE)
-[![Midnight preprod](https://img.shields.io/badge/Midnight-preprod-1c7a4c)](https://preprod.midnight.network/explorer/contract/1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba)
+[![Midnight preprod](https://img.shields.io/badge/Midnight-preprod-1c7a4c)](https://preprod.midnightexplorer.com/contracts/a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e)
+[![Midnight preview](https://img.shields.io/badge/Midnight-preview-0284c7)](https://preview.midnightexplorer.com/contracts/34b03973c1125b7bd89f2356841f1ddacc25404780f7139aebf47ce3c963c692)
+[![Live Demo](https://img.shields.io/badge/Live_dApp-silentpass--midnight.netlify.app-00c7b7?logo=netlify)](https://silentpass-midnight.netlify.app/)
 
 </div>
 
@@ -20,18 +21,20 @@ A zero-knowledge identity credential on [Midnight](https://midnight.network) des
 ## 📑 Table of Contents
 1. [Overview & Problem Statement](#-overview--problem-statement)
 2. [What is SilentPass?](#-what-is-silentpass)
-3. [How it Works: Public State vs Private Witness](#-how-it-works-public-state-vs-private-witness)
-4. [Hackathon Execution (Levels 1–4)](#-hackathon-execution-levels-14)
+3. [Submission Verification Checklist](#-submission-verification-checklist)
+4. [Live Deployment](#-live-deployment)
+5. [Interface Screenshots](#-interface-screenshots)
+6. [How it Works: Public State vs Private Witness](#-how-it-works-public-state-vs-private-witness)
+7. [Hackathon Execution (Levels 1–4)](#-hackathon-execution-levels-14)
    - [Level 1: New Moon — Setup & First Contract](#level-1-new-moon--setup--first-contract)
    - [Level 2: Waxing Crescent — Frontend Integration](#level-2-waxing-crescent--frontend-integration)
    - [Level 3: First Quarter — Production-Grade dApp](#level-3-first-quarter--production-grade-dapp)
    - [Level 4: Waxing Gibbous — MVP & Contract Logic](#level-4-waxing-gibbous--mvp--contract-logic)
-5. [Privacy Model: What an Observer Learns](#-privacy-model-what-an-observer-learns)
-6. [Architecture](#-architecture)
-7. [Getting Started (Local Development)](#-getting-started-local-development)
-8. [Submission Verification Checklist](#-submission-verification-checklist)
-9. [Live Deployment](#-live-deployment)
-10. [License](#-license)
+8. [Privacy Model: What an Observer Learns](#-privacy-model-what-an-observer-learns)
+9. [Architecture](#-architecture)
+10. [Getting Started (Local Development)](#-getting-started-local-development)
+11. [Video Demo Walkthrough](#-video-demo-walkthrough)
+12. [License](#-license)
 
 ---
 
@@ -57,15 +60,16 @@ The verifying app needs **no wallet, no proof server, and receives zero user dat
 
 | Requirement | How to Verify | Artifact / Link |
 | :--- | :--- | :--- |
+| **Live Demo dApp** | Open in browser | [silentpass-midnight.netlify.app](https://silentpass-midnight.netlify.app/) (Admin: [/admin](https://silentpass-midnight.netlify.app/admin)) |
 | **Compact Contract** | Review logic & circuits | [`contract/src/passport.compact`](contract/src/passport.compact) |
 | **Circuits & Keys** | Inspect directory | [`contract/src/managed/passport/`](contract/src/managed/passport/) |
 | **Preview Deployment** | On-chain query | [Preview Contract on Explorer](https://preview.midnightexplorer.com/contracts/34b03973c1125b7bd89f2356841f1ddacc25404780f7139aebf47ce3c963c692) |
-| **Preprod Deployment** | On-chain query | [Preprod Contract on Explorer](https://preprod.midnight.network/explorer/contract/1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba) |
+| **Preprod Deployment** | On-chain query | [Preprod Contract on Explorer](https://preprod.midnightexplorer.com/contracts/a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e) |
 | **Passing Tests** | Run `npm test` | 10 passing tests in [`passport-sdk/src/smoke.test.mjs`](passport-sdk/src/smoke.test.mjs) |
 | **CI/CD Pipeline** | GitHub Actions | [Workflow File](.github/workflows/ci.yml) & [Actions Tab](https://github.com/BhagatWeb/silentpass/actions) |
 | **Wallet Integration** | Launch UI | Connect Lace / 1AM wallet in [`verifier-ui`](verifier-ui/) |
 | **Privacy Claim** | Review Spec | [Privacy Model Section](#-privacy-model-what-an-observer-learns) |
-| **Product X Profile** | Public Social Profile | [@SilentPassZK on X](https://x.com/SilentPassZK) |
+| **Product Launch on X** | Public Social Announcement | [Launch Post on X](https://x.com/amanrajbhagat11/status/2098406980679553426?s=20) |
 
 ---
 
@@ -74,18 +78,33 @@ The verifying app needs **no wallet, no proof server, and receives zero user dat
 | Component | Network | Address / Details | Status |
 | :--- | :--- | :--- | :--- |
 | **Smart Contract (Preview)** | Midnight Preview | [`34b03973c1125b7bd89f2356841f1ddacc25404780f7139aebf47ce3c963c692`](https://preview.midnightexplorer.com/contracts/34b03973c1125b7bd89f2356841f1ddacc25404780f7139aebf47ce3c963c692) | ✅ Active on-chain |
-| **Smart Contract (Preprod)** | Midnight Preprod | [`1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba`](https://preprod.midnight.network/explorer/contract/1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba) | ✅ Active on-chain |
-| **Verifier UI** | Preview & Preprod | Configured with `netlify.toml` (SPA redirects + wasm build) | ✅ Built & Ready |
+| **Smart Contract (Preprod)** | Midnight Preprod | [`a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e`](https://preprod.midnightexplorer.com/contracts/a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e) | ✅ Active on-chain |
+| **Live Frontend dApp** | Production Web (Netlify) | [https://silentpass-midnight.netlify.app/](https://silentpass-midnight.netlify.app/) | ✅ Live & Operational |
+| **In-Browser Admin / Deployer** | Production Web (Netlify) | [https://silentpass-midnight.netlify.app/admin](https://silentpass-midnight.netlify.app/admin) | ✅ Live & Operational |
 
 ---
 
 ## 📸 Interface Screenshots
 
-| Admin Deployer Portal | Zero-Knowledge Verification | Identity Proof Console |
-| :---: | :---: | :---: |
-| ![Admin Deployer](<sub assets/ui1.png>) |
- ![ZK Verification](<sub assets/ui2.png>) | 
- ![Console](<sub assets/ui3.png>) |
+#### 1. In-Browser Contract Deployer & Admin Portal
+Enables one-click deployment directly from connected Midnight browser wallets (1AM / Lace) to the Preview network with zero CLI memory overhead.
+
+![Admin Deployer Portal](sub%20assets/ui1.png)
+
+---
+
+#### 2. Zero-Knowledge Document Verification & Credential Issuance
+Holder verifies identity attributes once; attributes are hashed into a commitment with random salt, keeping all raw personal data strictly on-device.
+
+![ZK Verification & Credential Issuance](sub%20assets/ui2.png)
+
+---
+
+#### 3. Identity Proof & Verification Console
+Real-time proof verification console with scoped nullifiers, explorer verification links, privacy guarantees, and receipt export.
+
+![Identity Proof Console](sub%20assets/ui3.png)
+
 
 
 ## ⚙️ How it Works: Public State vs Private Witness
@@ -105,12 +124,26 @@ Membership and validity are proven locally using zero-knowledge circuits, so a v
 
 ---
 
-## 🚀 Hackathon Execution (Levels 1–3)
+## 🚀 Hackathon Execution (Levels 1–4)
 
 ### Level 1: New Moon — Setup & First Contract
 * **Toolchain Set Up**: Full monorepo configured with `compactc`, Midnight TypeScript SDKs (`@midnight-ntwrk/midnight-js-*`), Vite, and Node.js 24.
 * **Smart Contract**: Developed [`passport.compact`](contract/src/passport.compact) with public state management (authorities, revoked credentials, session verifications) and private witnesses for identity and age thresholds.
-* **Circuits Generated**: Pre-compiled zero-knowledge circuits and keys maintained in [`contract/src/managed/passport/`](contract/src/managed/passport/).
+* **Circuits Generated**: Compiled using `compact compile src/passport.compact src/managed/passport` producing 10 zero-knowledge circuits, ledger state types, and verifier keys in [`contract/src/managed/passport/`](contract/src/managed/passport/):
+  ```text
+  Compiling src/passport.compact -> src/managed/passport
+  Generated circuits:
+    ✓ issueCredential (credential commitment binding)
+    ✓ revoke (authority revocation nullifier)
+    ✓ addIssuer (administrative authority enrollment)
+    ✓ removeIssuer (governance authority revocation)
+    ✓ proveAgeOver (threshold age evaluation)
+    ✓ proveIdentity (selective disclosure predicate)
+    ✓ proveUniqueHuman (scoped Sybil-resistance nullifier)
+    ✓ proveResidency (ISO jurisdiction match)
+    ✓ proveAccredited (investor qualification bit)
+    ✓ proveEligibility (composite multi-predicate gate)
+  ```
 * **Contract Deployment**: Deployed and verified on Midnight **Preview** and **Preprod** networks:
   - **Preview Network Deployment**:
     ```text
@@ -119,18 +152,19 @@ Membership and validity are proven locally using zero-knowledge circuits, so a v
     Explorer Link: [View on Midnight Preview Explorer](https://preview.midnightexplorer.com/contracts/34b03973c1125b7bd89f2356841f1ddacc25404780f7139aebf47ce3c963c692)
   - **Preprod Network Deployment**:
     ```text
-    1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba
+    a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e
     ```
-    Explorer Link: [View on Midnight Preprod Explorer](https://preprod.midnight.network/explorer/contract/1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba)
-* **Initial Product Idea**: Detailed in [`SilentPass_Idea.txt`](SilentPass_Idea.txt) and summarized above.
+    Explorer Link: [View on Midnight Preprod Explorer](https://preprod.midnightexplorer.com/contracts/a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e)
+* **Initial Product Idea**: Detailed in [`SilentPass_Idea.txt`](SilentPass_Idea.txt) and summarized in the overview section.
 
 ### Level 2: Waxing Crescent — Frontend Integration
 * **Wallet Integration**: Integrated browser wallet connection using Lace and 1AM wallet via `@midnight-ntwrk/dapp-connector-api`. The UI ([`verifier-ui`](verifier-ui/)) manages connect, disconnect, network status, and balance states.
 * **Frontend Circuit Calls**: The `useSilentPass` React hook coordinates interaction with the deployed contract to generate local ZK proofs (via Midnight proof-server) and submit transactions.
 * **Observable Privacy Behavior**: When a user proves their age meets a threshold (e.g. 18+ or 21+), their exact birthdate and document are never transmitted over the network or written to the chain. The circuit evaluates the predicate in private state, producing only a cryptographic proof and a verified bit.
-* **Live Deployment Ready**: Configured with `netlify.toml` and Cloudflare Pages `_redirects` for continuous web hosting.
+* **Live Demo dApp**: Hosted and operational on Netlify at [https://silentpass-midnight.netlify.app/](https://silentpass-midnight.netlify.app/) (with Admin Deployer at [/admin](https://silentpass-midnight.netlify.app/admin)), configured with `netlify.toml` and `vercel.json` for continuous deployment.
 
 ### Level 3: First Quarter — Production-Grade dApp
+* **Live Demo URL**: [https://silentpass-midnight.netlify.app/](https://silentpass-midnight.netlify.app/)
 * **Selected Problem Statement**: 
   - **Confidential Credentials** — prove a credential is valid without disclosing it.
   - **Age / Eligibility Gate** — prove an age threshold without revealing the underlying birthdate.
@@ -145,8 +179,8 @@ Membership and validity are proven locally using zero-knowledge circuits, so a v
   - **Composite Eligibility (`proveEligibility`)**: High-throughput multi-predicate gate validating age threshold, jurisdiction whitelist, and accreditation status simultaneously in a single zero-knowledge proof.
   - **Issuer Governance (`removeIssuer`)**: Admin circuit to revoke compromised or untrusted authority public keys.
   - **Pure Circuit Helpers**: Deterministic evaluation logic for age (`isAgeEligible`) and country matching (`isCountryMatch`).
-* **Live Preprod & Preview Deployments**: Tested with browser wallet integration against Preview deployment [`34b03973c1125b7bd89f2356841f1ddacc25404780f7139aebf47ce3c963c692`](https://preview.midnightexplorer.com/contracts/34b03973c1125b7bd89f2356841f1ddacc25404780f7139aebf47ce3c963c692) and Preprod deployment [`1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba`](https://preprod.midnight.network/explorer/contract/1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba).
-* **Public Product (X) Profile**: Live product profile launched at [@SilentPassZK](https://x.com/SilentPassZK).
+* **Live Preprod & Preview Deployments**: Tested with browser wallet integration against Preview deployment [`34b03973c1125b7bd89f2356841f1ddacc25404780f7139aebf47ce3c963c692`](https://preview.midnightexplorer.com/contracts/34b03973c1125b7bd89f2356841f1ddacc25404780f7139aebf47ce3c963c692) and Preprod deployment [`a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e`](https://preprod.midnightexplorer.com/contracts/a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e).
+* **Public Product Launch (X)**: Official product launch thread live on X at [@amanrajbhagat11 Post](https://x.com/amanrajbhagat11/status/2098406980679553426?s=20).
 * **CI/CD Pipeline**: GitHub Actions running on `master` branch covering contract bindings, SDK, UI build, and crypto test suites.
 
 ---
@@ -189,7 +223,14 @@ silentpass/
 
 ## 💻 Getting Started (Local Development)
 
-**Prerequisites:** Node 24+, Docker, a Midnight compatible wallet (Lace), and `compactc`.
+**Prerequisites:** Node 24+, Docker, a Midnight compatible wallet (Lace / 1AM), and `compactc`.
+
+> [!TIP]
+> **Getting Test Tokens (tNIGHT & DUST)**:
+> Use your **unshielded address** (`mn_addr_...`) from Lace or 1AM on the active Nethermind faucets:
+> - **Preprod Faucet**: [midnight-tmnight-preprod.nethermind.dev](https://midnight-tmnight-preprod.nethermind.dev/)
+> - **Preview Faucet**: [midnight-tmnight-preview.nethermind.dev](https://midnight-tmnight-preview.nethermind.dev/)
+
 
 1. **Start the Midnight Proof Server**
    ```bash
@@ -222,6 +263,14 @@ silentpass/
      ✓ multi-threshold age gate (21+) is exact at boundary
 
    10/10 crypto-scheme checks passed against the compiled contract.
+   Running eligibility & advanced verification circuit tests:
+     ✓ accreditation bit is cryptographically bound in attributesHash
+     ✓ credential commitment preserves accreditation distinction
+     ✓ country residency matching is deterministic and sound
+     ✓ composite multi-attribute eligibility gate correctly enforces all conditions
+     ✓ unlinkability guarantee across independent verifiers holds
+
+   5/5 eligibility and composite verification tests passed.
    ```
 
 4. **Start the Exclusive Venue UI**
@@ -230,6 +279,21 @@ silentpass/
    ```
    Open `http://localhost:5173` in your browser.
 
+---
+
+## 🎥 Video Demo Walkthrough
+
+A 1-minute full demonstration video showing Lace / 1AM wallet connection, contract deployment on Preprod, credential issuance, and successful zero-knowledge circuit evaluation:
+
+[![Demo Video](https://img.shields.io/badge/Demo_Video-Watch_Walkthrough-e11d48)](sub%20assets/demo%20video.mp4)
+
+Direct repository video: [`sub assets/demo video.mp4`](sub%20assets/demo%20video.mp4)
+
+> **Key Highlights in Demo:**
+> 1. **Wallet Connect**: Instant Lace / 1AM connection on Midnight Preview.
+> 2. **In-Browser Deployment**: Admin portal deploying `passport.compact` without CLI overhead.
+> 3. **Private Witness Proof**: Proving age 18+ and residency without disclosing raw birthdate or country on-chain.
+> 4. **On-Chain Explorer Verification**: Instant verification visible on Midnight Explorer.
 
 ---
 

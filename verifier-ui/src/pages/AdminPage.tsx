@@ -45,6 +45,12 @@ export default function AdminPage() {
     setAdminSecretKeyHex(toHex(randomBytes(32)));
   };
 
+  React.useEffect(() => {
+    if (session?.networkId && (session.networkId === 'preprod' || session.networkId === 'preview')) {
+      setTargetNetwork(session.networkId);
+    }
+  }, [session?.networkId]);
+
   const handleDeploy = useCallback(async () => {
     if (!session || !isConnected) return;
     setStatus('preparing');
@@ -120,10 +126,11 @@ export default function AdminPage() {
     setDeployedAddress(null);
   };
 
+  const currentNetwork = session?.networkId || targetNetwork;
   const explorerBase =
-    targetNetwork === 'preview' || session?.networkId === 'preview'
-      ? 'https://preview.midnightexplorer.com/contracts'
-      : 'https://preprod.midnight.network/explorer/contract';
+    currentNetwork === 'preprod'
+      ? 'https://preprod.midnightexplorer.com/contracts'
+      : 'https://preview.midnightexplorer.com/contracts';
 
   return (
     <div className="admin-wrapper" style={{ minHeight: '100vh', padding: '2rem 1rem', background: '#0a0a0f', color: '#e4e4e7' }}>
@@ -236,17 +243,38 @@ export default function AdminPage() {
               <p style={{ color: '#a1a1aa', fontSize: '0.875rem', marginBottom: '1.5rem', maxWidth: '24rem', margin: '0 auto 1.5rem auto' }}>
                 Connect your 1AM or Lace wallet to sponsor gas and sign the deployment transaction.
               </p>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
+                    setTargetNetwork('preprod');
+                    const sess = await connect('preprod');
+                    if (sess?.networkId) setTargetNetwork(sess.networkId as any);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #7928ca 0%, #a855f7 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '0.5rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.9375rem',
+                    boxShadow: '0 4px 12px rgba(168, 85, 247, 0.4)',
+                  }}
+                >
+                  Connect on Preprod Network
+                </button>
+                <button
+                  onClick={async () => {
                     setTargetNetwork('preview');
-                    connect('preview');
+                    const sess = await connect('preview');
+                    if (sess?.networkId) setTargetNetwork(sess.networkId as any);
                   }}
                   style={{
                     background: '#2563eb',
                     color: '#ffffff',
                     border: 'none',
-                    padding: '0.75rem 1.75rem',
+                    padding: '0.75rem 1.5rem',
                     borderRadius: '0.5rem',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -254,26 +282,22 @@ export default function AdminPage() {
                     boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)',
                   }}
                 >
-                  Connect on Preview Network (Recommended)
+                  Connect on Preview Network
                 </button>
-                <button
-                  onClick={() => {
-                    setTargetNetwork('preprod');
-                    connect('preprod');
-                  }}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    color: '#a1a1aa',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '0.5rem',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  Connect on Preprod
-                </button>
+              </div>
+              <div style={{ marginTop: '1.25rem', padding: '0.75rem 1rem', background: 'rgba(59, 130, 246, 0.08)', borderRadius: '0.5rem', border: '1px solid rgba(59, 130, 246, 0.2)', fontSize: '0.8rem', textAlign: 'left' }}>
+                <span style={{ color: '#60a5fa', fontWeight: 600 }}>Need test tNIGHT / DUST for deployment? </span>
+                <p style={{ color: '#94a3b8', margin: '0.25rem 0 0.5rem 0', fontSize: '0.75rem' }}>
+                  Use your unshielded address (<code>mn_addr_...</code>) on the active Nethermind faucet:
+                </p>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <a href="https://midnight-tmnight-preview.nethermind.dev/" target="_blank" rel="noreferrer" style={{ color: '#38bdf8', textDecoration: 'underline', fontWeight: 500 }}>
+                    ↗ Preview Faucet (Online)
+                  </a>
+                  <a href="https://midnight-tmnight-preprod.nethermind.dev/" target="_blank" rel="noreferrer" style={{ color: '#c084fc', textDecoration: 'underline', fontWeight: 500 }}>
+                    ↗ Preprod Faucet (Online)
+                  </a>
+                </div>
               </div>
             </div>
           ) : (

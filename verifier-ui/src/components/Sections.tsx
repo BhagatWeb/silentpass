@@ -1,7 +1,7 @@
 import { contractUrl } from '../lib/format.js';
 import { CodeWindow } from './Code.js';
 
-const CONTRACT = '1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba';
+const CONTRACT = 'a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e';
 
 const STEPS = [
   {

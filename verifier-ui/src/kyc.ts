@@ -26,7 +26,7 @@ export interface KycResult {
 // a local backend. VITE_KYC_URL overrides both when set.
 const KYC_URL =
   (import.meta.env.VITE_KYC_URL as string | undefined) ??
-  (import.meta.env.DEV ? 'https://silentpass.vercel.app/api/kyc' : '/api/kyc');
+  (import.meta.env.DEV ? 'https://silentpass-midnight.netlify.app/api/kyc' : '/api/kyc');
 
 /** Reads a File into a data URI. */
 export const fileToDataUri = (file: File): Promise<string> =>

@@ -1,8 +1,50 @@
+# Netlify Configuration for SilentPass Monorepo
+# Automatically detected when importing repo into Netlify
+
 [build]
+  base = "."
   command = "npm run build"
   publish = "verifier-ui/dist"
 
+[build.environment]
+  NODE_VERSION = "24"
+  NPM_FLAGS = "--legacy-peer-deps"
+  VITE_NETWORK_ID = "preprod"
+  VITE_CONTRACT_ADDRESS = "a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e"
+
+# Single-Page Application (SPA) routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# MIME Types and Caching for WebAssembly and ZK artifacts
+[[headers]]
+  for = "/*.wasm"
+  [headers.values]
+    Content-Type = "application/wasm"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/managed/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/zkir/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

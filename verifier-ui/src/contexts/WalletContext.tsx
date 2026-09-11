@@ -58,11 +58,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(id);
   }, []);
 
-  const connect = useCallback(async (targetNetwork = 'preview') => {
+  const connect = useCallback(async (targetNetwork?: string) => {
     if (connectingRef.current) return;
     connectingRef.current = true;
     setIsConnecting(true);
-    setNetworkIdState(targetNetwork);
 
     try {
       const midnightObj = (window as any).midnight;
@@ -76,8 +75,28 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No Midnight wallet found. Please install the 1AM or Lace browser extension.');
       }
 
-      const api = await wallet.connect(targetNetwork);
+      let api: any;
+      let requested = targetNetwork ?? networkId ?? 'preview';
+
+      try {
+        api = await wallet.connect(requested);
+      } catch (err: any) {
+        // If wallet rejects with network mismatch (e.g. "Wallet is on preprod, requested preview"),
+        // parse the actual network the wallet is on and auto-connect to it!
+        const match = err?.message?.match(/Wallet is on (\w+)/i);
+        if (match && match[1]) {
+          const actualNetwork = match[1].toLowerCase();
+          console.info(`Auto-negotiating with wallet active network: ${actualNetwork}`);
+          api = await wallet.connect(actualNetwork);
+          requested = actualNetwork;
+        } else {
+          throw err;
+        }
+      }
+
       const sess = await createConnectedSession(api);
+      const activeNet = sess.networkId || requested || 'preview';
+      setNetworkIdState(activeNet);
       setSession(sess);
       setAddress(sess.unshieldedAddress);
       setIsConnected(true);
@@ -89,7 +108,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       connectingRef.current = false;
       setIsConnecting(false);
     }
-  }, []);
+  }, [networkId]);
 
   const disconnect = useCallback(() => {
     setAddress(null);

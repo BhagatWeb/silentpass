@@ -35,7 +35,7 @@ Midnight enables users to prove statements about their data without revealing th
 PROGRAM ROADMAP & EXECUTION PLAN
 
 Level 1: New Moon (Setup & First Contract) — [COMPLETED]
-- Deliverables: Installed Midnight toolchain (compactc, proof server, Node 24), authored passport.compact with ledger state and private witnesses, generated managed circuits, deployed to Midnight Preprod (1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba), and documented public state vs private witness boundaries.
+- Deliverables: Installed Midnight toolchain (compactc, proof server, Node 24), authored passport.compact with ledger state and private witnesses, generated managed circuits, deployed to Midnight Preprod (a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e), and documented public state vs private witness boundaries.
 
 Level 2: Waxing Crescent (Frontend Integration) — [COMPLETED]
 - Deliverables: Developed verifier-ui connecting to Lace / 1AM wallet via @midnight-ntwrk/dapp-connector-api, invoked verification circuits directly from the frontend, demonstrated observable privacy behavior (proving age threshold without exposing DOB), and prepared deployment configs.
