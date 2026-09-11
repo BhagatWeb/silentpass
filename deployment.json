@@ -1,0 +1,8 @@
+{
+  "contractAddress": "1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba",
+  "networkId": "preprod",
+  "issuerSecretKey": "157ad2d2c8947a1b0beecc4d0dfe3befb2590da56a3b4a9d426e34f2d1fcf62b",
+  "issuerPublicKey": "n/a (join mode)",
+  "deployedAt": "2026-07-27T13:33:19.533Z",
+  "explorer": "https://preprod.midnight.network/explorer/contract/1904b5a37fdcc8eeb62a479e9924de30b51d0e227bc43b045b21806254f994ba"
+}
