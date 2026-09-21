@@ -70,7 +70,7 @@ The verifying application receives a single cryptographically verifiable boolean
 | **CI/CD Pipeline** | GitHub Actions | [Workflow File](.github/workflows/ci.yml) and [Passing Action Runs](https://github.com/BhagatWeb/silentpass/actions) |
 | **Wallet Integration** | Launch UI | Connect 1AM or Lace wallet in [`verifier-ui`](verifier-ui/) |
 | **Privacy Model Documentation** | Review specification | [Privacy Model Section](#privacy-model-what-an-observer-learns) |
-| **Video Demonstration** | Watch walkthrough | [Google Drive Demo Video](https://drive.google.com/file/d/1foaBYehoTPS_apZJBb48Wq6qu6mCcoWl/view?usp=sharing) |
+| **Video Demonstration** | Watch walkthrough | [Google Drive Demo Video](https://drive.google.com/file/d/1v_5oAWOqa9Y3b7eANjb3jdWFRqXTuLQ3/view?usp=sharing) |
 | **Public Announcement** | Verified post on X | [Launch Post on X](https://x.com/amanrajbhagat11/status/2098406980679553426?s=20) |
 
 ---
@@ -277,7 +277,7 @@ silentpass/
 
 A comprehensive demonstration video showing Lace and 1AM wallet connection, contract deployment on Midnight Preprod, zero-knowledge credential issuance, and local proof evaluation:
 
-* **Google Drive Link**: [Watch SilentPass Demonstration Video](https://drive.google.com/file/d/1foaBYehoTPS_apZJBb48Wq6qu6mCcoWl/view?usp=sharing)
+* **Google Drive Link**: [Watch SilentPass Demonstration Video](https://drive.google.com/file/d/1v_5oAWOqa9Y3b7eANjb3jdWFRqXTuLQ3/view?usp=sharing)
 * **Local Repository Backup**: [`sub assets/demo video.mp4`](sub%20assets/demo%20video.mp4)
 
 **Key Highlights in Video:**
