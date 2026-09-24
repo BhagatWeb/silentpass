@@ -8,7 +8,7 @@ A zero-knowledge identity credential on [Midnight Network](https://midnight.netw
 
 [![npm silentpass](https://img.shields.io/npm/v/silentpass?color=7928ca&label=silentpass&logo=npm)](https://www.npmjs.com/package/silentpass)
 [![npm silentpass-react](https://img.shields.io/npm/v/silentpass-react?color=7928ca&label=silentpass-react&logo=npm)](https://www.npmjs.com/package/silentpass-react)
-[![X Post](https://img.shields.io/badge/X-Launch_Post-black?logo=x)](https://x.com/amanrajbhagat11/status/2098406980679553426?s=20)
+[![X Post](https://img.shields.io/badge/X-Launch_Post-black?logo=x)](https://x.com/silentpassmid/status/2098406980679553426?s=20)
 [![CI](https://github.com/BhagatWeb/silentpass/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/BhagatWeb/silentpass/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-111111)](LICENSE)
 [![Midnight Preprod](https://img.shields.io/badge/Midnight-Preprod-1c7a4c)](https://preprod.midnightexplorer.com/contracts/a2f3e16eb2f8d0b6d678b21308f37f3dbdd1c484636bc540b256af8ee1df9c7e)
@@ -71,7 +71,7 @@ The verifying application receives a single cryptographically verifiable boolean
 | **Wallet Integration** | Launch UI | Connect 1AM or Lace wallet in [`verifier-ui`](verifier-ui/) |
 | **Privacy Model Documentation** | Review specification | [Privacy Model Section](#privacy-model-what-an-observer-learns) |
 | **Video Demonstration** | Watch walkthrough | [Google Drive Demo Video](https://drive.google.com/file/d/1v_5oAWOqa9Y3b7eANjb3jdWFRqXTuLQ3/view?usp=sharing) |
-| **Public Announcement** | Verified post on X | [Launch Post on X](https://x.com/amanrajbhagat11/status/2098406980679553426?s=20) |
+| **Public Announcement** | Verified post on X | [Launch Post on X](https://x.com/silentpassmid/status/2098406980679553426?s=20) |
 
 ---
 
@@ -171,7 +171,7 @@ Zero-knowledge proofs are generated locally by the user. An observer or verifier
   - **Composite Eligibility (`proveEligibility`)**: Multi-predicate gate validating age threshold, jurisdiction whitelist, and accreditation status simultaneously in a single zero-knowledge proof.
   - **Issuer Governance (`removeIssuer`)**: Administrative circuit to revoke compromised authority keys.
 * **Multi-Network Support**: Live deployments maintained and tested on both Preprod and Preview.
-* **Public Social Presence**: Official announcement and demonstration thread published on X: [Launch Post on X](https://x.com/amanrajbhagat11/status/2098406980679553426?s=20).
+* **Public Social Presence**: Official announcement and demonstration thread published on X: [Launch Post on X](https://x.com/silentpassmid/status/2098406980679553426?s=20).
 
 ---
 
