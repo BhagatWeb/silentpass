@@ -69,7 +69,7 @@ export async function createConnectedSession(api: any): Promise<ConnectedSession
     async proveTx(unprovenTx: any, _config?: any) {
       if (provingProvider) {
         try {
-          const { CostModel } = await import('@midnight-ntwrk/ledger-v8');
+          const { CostModel } = await import('@midnight-ntwrk/midnight-js-protocol/ledger');
           return await unprovenTx.prove(provingProvider, CostModel.initialCostModel());
         } catch {
           return await unprovenTx.prove(provingProvider);
@@ -101,7 +101,8 @@ export async function createConnectedSession(api: any): Promise<ConnectedSession
       if (typeof result === 'string' && result) return result;
       if (result?.transactionId) return result.transactionId;
       if (result?.id) return result.id;
-      return txHex.slice(0, 64);
+      if (Array.isArray(result) && result[0]) return result[0];
+      throw new Error('Transaction submission failed: wallet returned no valid transaction identifier');
     },
   };
 

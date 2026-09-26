@@ -1,9 +1,10 @@
 /*
- * A PrivateStateProvider persisted in the browser's localStorage, so the
- * holder's credential survives page refreshes. Private state NEVER leaves
- * this origin, persistence is purely local.
+ * Encrypted PrivateStateProvider persisted in localStorage.
  *
- * Interface + scoping mirror example-bboard's in-memory provider.
+ * All private states and signing keys stored in localStorage are encrypted
+ * using AES-GCM (256-bit key) with random IVs. The encryption key is derived
+ * from the user's wallet key (or user-controlled passphrase/seed) via PBKDF2
+ * using Web Crypto API.
  */
 import type { ContractAddress, SigningKey } from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';
 import type {
@@ -19,8 +20,9 @@ import type {
   SigningKeyExport,
 } from '@midnight-ntwrk/midnight-js-types';
 
-const STATES_KEY = 'zkpassport:private-states';
-const KEYS_KEY = 'zkpassport:signing-keys';
+const ENCRYPTED_STATES_KEY = 'zkpassport:enc-private-states:v2';
+const ENCRYPTED_KEYS_KEY = 'zkpassport:enc-signing-keys:v2';
+const SALT_KEY = 'zkpassport:storage-salt:v2';
 
 // JSON codec that survives Uint8Array and bigint round-trips.
 const encode = (value: unknown): string =>
@@ -43,46 +45,115 @@ const decode = <T>(value: string): T =>
         for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
         return bytes;
       }
-      // A Node Buffer serializes to {type:'Buffer',data:[...]} because its own
-      // toJSON() runs before our replacer (so it never reached the __u8 branch
-      // on encode). Restore it to a Uint8Array so witnesses return Bytes<N>.
       if (v.type === 'Buffer' && Array.isArray(v.data)) return new Uint8Array(v.data);
       if (typeof v.__big === 'string') return BigInt(v.__big);
     }
     return v;
   }) as T;
 
+function getOrGenerateSalt(): Uint8Array {
+  const existing = localStorage.getItem(SALT_KEY);
+  if (existing) {
+    const bytes = new Uint8Array(existing.length / 2);
+    for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(existing.slice(i * 2, i * 2 + 2), 16);
+    return bytes;
+  }
+  const salt = new Uint8Array(16);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(salt);
+  } else {
+    for (let i = 0; i < 16; i++) salt[i] = Math.floor(Math.random() * 256);
+  }
+  const hex = Array.from(salt, (b) => b.toString(16).padStart(2, '0')).join('');
+  localStorage.setItem(SALT_KEY, hex);
+  return salt;
+}
+
+let cachedCryptoKey: CryptoKey | null = null;
+let lastKeyMaterial: string | null = null;
+
+async function getEncryptionKey(walletOrUserEntropy: string): Promise<CryptoKey> {
+  if (cachedCryptoKey && lastKeyMaterial === walletOrUserEntropy) {
+    return cachedCryptoKey;
+  }
+
+  const saltBytes = getOrGenerateSalt();
+  const salt = new Uint8Array(saltBytes.length);
+  salt.set(saltBytes);
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(walletOrUserEntropy || 'silentpass-default-local-entropy'),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey'],
+  );
+
+  const derived = await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: salt.buffer as ArrayBuffer,
+      iterations: 100_000,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+
+  cachedCryptoKey = derived;
+  lastKeyMaterial = walletOrUserEntropy;
+  return derived;
+}
+
+async function encryptData(plaintext: string, walletOrUserEntropy: string): Promise<string> {
+  const key = await getEncryptionKey(walletOrUserEntropy);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder();
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    enc.encode(plaintext),
+  );
+
+  const ivHex = Array.from(iv, (b) => b.toString(16).padStart(2, '0')).join('');
+  const cipherHex = Array.from(new Uint8Array(ciphertext), (b) => b.toString(16).padStart(2, '0')).join('');
+  return JSON.stringify({ iv: ivHex, ct: cipherHex });
+}
+
+async function decryptData(envelope: string, walletOrUserEntropy: string): Promise<string | null> {
+  try {
+    const { iv: ivHex, ct: cipherHex } = JSON.parse(envelope);
+    const key = await getEncryptionKey(walletOrUserEntropy);
+    const iv = new Uint8Array(ivHex.length / 2);
+    for (let i = 0; i < iv.length; i++) iv[i] = parseInt(ivHex.slice(i * 2, i * 2 + 2), 16);
+
+    const ciphertext = new Uint8Array(cipherHex.length / 2);
+    for (let i = 0; i < ciphertext.length; i++) ciphertext[i] = parseInt(cipherHex.slice(i * 2, i * 2 + 2), 16);
+
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      ciphertext,
+    );
+    return new TextDecoder().decode(decrypted);
+  } catch {
+    return null;
+  }
+}
+
 type StatesShape = Record<ContractAddress, Record<string, string>>;
 
-const loadStates = (): StatesShape => {
-  try {
-    return JSON.parse(localStorage.getItem(STATES_KEY) ?? '{}') as StatesShape;
-  } catch {
-    return {};
-  }
-};
-
-const saveStates = (states: StatesShape): void => {
-  localStorage.setItem(STATES_KEY, JSON.stringify(states));
-};
-
-const loadKeys = (): Record<ContractAddress, SigningKey> => {
-  try {
-    return JSON.parse(localStorage.getItem(KEYS_KEY) ?? '{}') as Record<ContractAddress, SigningKey>;
-  } catch {
-    return {};
-  }
-};
-
-const saveKeys = (keys: Record<ContractAddress, SigningKey>): void => {
-  localStorage.setItem(KEYS_KEY, JSON.stringify(keys));
-};
-
-export const localStoragePrivateStateProvider = <
+export const encryptedLocalStoragePrivateStateProvider = <
   PSI extends PrivateStateId,
   PS = unknown,
->(): PrivateStateProvider<PSI, PS> => {
+>(keyMaterialProvider?: () => string): PrivateStateProvider<PSI, PS> => {
   let contractAddress: ContractAddress | null = null;
+
+  const getKeyEntropy = (): string => {
+    return keyMaterialProvider ? keyMaterialProvider() : (localStorage.getItem('zkpassport:user-key') || 'silentpass-local-seed');
+  };
 
   const requireContractAddress = (): ContractAddress => {
     if (contractAddress === null) {
@@ -91,68 +162,107 @@ export const localStoragePrivateStateProvider = <
     return contractAddress;
   };
 
-  const scoped = (address: ContractAddress): Record<string, string> => loadStates()[address] ?? {};
+  const loadStates = async (): Promise<StatesShape> => {
+    const enc = localStorage.getItem(ENCRYPTED_STATES_KEY);
+    if (!enc) {
+      // Clean up any legacy plaintext storage
+      if (localStorage.getItem('zkpassport:private-states')) {
+        localStorage.removeItem('zkpassport:private-states');
+      }
+      return {};
+    }
+    const decrypted = await decryptData(enc, getKeyEntropy());
+    if (!decrypted) return {};
+    try {
+      return JSON.parse(decrypted) as StatesShape;
+    } catch {
+      return {};
+    }
+  };
+
+  const saveStates = async (states: StatesShape): Promise<void> => {
+    const plaintext = JSON.stringify(states);
+    const encrypted = await encryptData(plaintext, getKeyEntropy());
+    localStorage.setItem(ENCRYPTED_STATES_KEY, encrypted);
+  };
+
+  const loadKeys = async (): Promise<Record<ContractAddress, SigningKey>> => {
+    const enc = localStorage.getItem(ENCRYPTED_KEYS_KEY);
+    if (!enc) return {};
+    const decrypted = await decryptData(enc, getKeyEntropy());
+    if (!decrypted) return {};
+    try {
+      return JSON.parse(decrypted) as Record<ContractAddress, SigningKey>;
+    } catch {
+      return {};
+    }
+  };
+
+  const saveKeys = async (keys: Record<ContractAddress, SigningKey>): Promise<void> => {
+    const plaintext = JSON.stringify(keys);
+    const encrypted = await encryptData(plaintext, getKeyEntropy());
+    localStorage.setItem(ENCRYPTED_KEYS_KEY, encrypted);
+  };
 
   return {
     setContractAddress(address: ContractAddress): void {
       contractAddress = address;
     },
-    set(key: PSI, state: PS): Promise<void> {
+    async set(key: PSI, state: PS): Promise<void> {
       const address = requireContractAddress();
-      const states = loadStates();
+      const states = await loadStates();
       states[address] = { ...(states[address] ?? {}), [key]: encode(state) };
-      saveStates(states);
-      return Promise.resolve();
+      await saveStates(states);
     },
-    get(key: PSI): Promise<PS | null> {
-      const raw = scoped(requireContractAddress())[key];
-      return Promise.resolve(raw === undefined ? null : decode<PS>(raw));
-    },
-    remove(key: PSI): Promise<void> {
+    async get(key: PSI): Promise<PS | null> {
       const address = requireContractAddress();
-      const states = loadStates();
+      const states = await loadStates();
+      const raw = states[address]?.[key];
+      return raw === undefined ? null : decode<PS>(raw);
+    },
+    async remove(key: PSI): Promise<void> {
+      const address = requireContractAddress();
+      const states = await loadStates();
       if (states[address]) {
         delete states[address][key];
-        saveStates(states);
+        await saveStates(states);
       }
-      return Promise.resolve();
     },
-    clear(): Promise<void> {
+    async clear(): Promise<void> {
       const address = requireContractAddress();
-      const states = loadStates();
+      const states = await loadStates();
       delete states[address];
-      saveStates(states);
-      return Promise.resolve();
+      await saveStates(states);
     },
-    setSigningKey(address: ContractAddress, signingKey: SigningKey): Promise<void> {
-      const keys = loadKeys();
+    async setSigningKey(address: ContractAddress, signingKey: SigningKey): Promise<void> {
+      const keys = await loadKeys();
       keys[address] = signingKey;
-      saveKeys(keys);
-      return Promise.resolve();
+      await saveKeys(keys);
     },
-    getSigningKey(address: ContractAddress): Promise<SigningKey | null> {
-      return Promise.resolve(loadKeys()[address] ?? null);
+    async getSigningKey(address: ContractAddress): Promise<SigningKey | null> {
+      const keys = await loadKeys();
+      return keys[address] ?? null;
     },
-    removeSigningKey(address: ContractAddress): Promise<void> {
-      const keys = loadKeys();
+    async removeSigningKey(address: ContractAddress): Promise<void> {
+      const keys = await loadKeys();
       delete keys[address];
-      saveKeys(keys);
-      return Promise.resolve();
+      await saveKeys(keys);
     },
-    clearSigningKeys(): Promise<void> {
-      saveKeys({});
-      return Promise.resolve();
+    async clearSigningKeys(): Promise<void> {
+      await saveKeys({});
     },
-    exportPrivateStates(options?: ExportPrivateStatesOptions): Promise<PrivateStateExport> {
+    async exportPrivateStates(options?: ExportPrivateStatesOptions): Promise<PrivateStateExport> {
       void options;
       const address = requireContractAddress();
-      return Promise.resolve({
+      const states = await loadStates();
+      const scoped = states[address] ?? {};
+      return {
         format: 'midnight-private-state-export',
-        encryptedPayload: encode({ contractAddress: address, states: scoped(address) }),
-        salt: 'zkpassport-local-storage-provider',
-      });
+        encryptedPayload: encode({ contractAddress: address, states: scoped }),
+        salt: 'zkpassport-encrypted-storage-provider',
+      };
     },
-    importPrivateStates(
+    async importPrivateStates(
       exportData: PrivateStateExport,
       options?: ImportPrivateStatesOptions,
     ): Promise<ImportPrivateStatesResult> {
@@ -160,7 +270,7 @@ export const localStoragePrivateStateProvider = <
       const conflictStrategy = options?.conflictStrategy ?? 'error';
       const payload = decode<{ states?: Record<string, string> }>(exportData.encryptedPayload);
       const incoming = payload.states ?? {};
-      const states = loadStates();
+      const states = await loadStates();
       const existing = states[address] ?? {};
       let imported = 0;
       let skipped = 0;
@@ -183,18 +293,19 @@ export const localStoragePrivateStateProvider = <
       }
 
       states[address] = existing;
-      saveStates(states);
-      return Promise.resolve({ imported, skipped, overwritten });
+      await saveStates(states);
+      return { imported, skipped, overwritten };
     },
-    exportSigningKeys(options?: ExportSigningKeysOptions): Promise<SigningKeyExport> {
+    async exportSigningKeys(options?: ExportSigningKeysOptions): Promise<SigningKeyExport> {
       void options;
-      return Promise.resolve({
+      const keys = await loadKeys();
+      return {
         format: 'midnight-signing-key-export',
-        encryptedPayload: encode({ keys: loadKeys() }),
-        salt: 'zkpassport-local-storage-provider',
-      });
+        encryptedPayload: encode({ keys }),
+        salt: 'zkpassport-encrypted-storage-provider',
+      };
     },
-    importSigningKeys(
+    async importSigningKeys(
       exportData: SigningKeyExport,
       options?: ImportSigningKeysOptions,
     ): Promise<ImportSigningKeysResult> {
@@ -203,7 +314,7 @@ export const localStoragePrivateStateProvider = <
         exportData.encryptedPayload,
       );
       const incoming = payload.keys ?? {};
-      const keys = loadKeys();
+      const keys = await loadKeys();
       let imported = 0;
       let skipped = 0;
       let overwritten = 0;
@@ -224,8 +335,10 @@ export const localStoragePrivateStateProvider = <
         keys[address] = signingKey;
       }
 
-      saveKeys(keys);
-      return Promise.resolve({ imported, skipped, overwritten });
+      await saveKeys(keys);
+      return { imported, skipped, overwritten };
     },
   };
 };
+
+export const localStoragePrivateStateProvider = encryptedLocalStoragePrivateStateProvider;

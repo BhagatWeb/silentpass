@@ -49,6 +49,25 @@ export const nameHash = async (name: string): Promise<Uint8Array> => {
 };
 
 /**
+ * Derives a deterministic personhood nullifier from KYC identity attributes
+ * (full name, birthDate, and country). This gives true cross-enrollment
+ * deduplication on the issuer side to prevent one human from enrolling
+ * multiple times with different keypairs.
+ */
+export const derivePersonhoodNullifier = async (
+  name: string,
+  birthDate: Date | string | bigint,
+  country?: number,
+): Promise<Uint8Array> => {
+  const normName = normalizeName(name);
+  const bDateStr = typeof birthDate === 'bigint' ? birthDate.toString() : yyyymmdd(birthDate).toString();
+  const cStr = String(country ?? 0);
+  const tag = `zkp:personhood:${normName}:${bDateStr}:${cStr}`;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tag));
+  return new Uint8Array(digest);
+};
+
+/**
  * Encodes a date as YYYYMMDD (UTC). This encoding makes age arithmetic exact:
  * age >= t  <=>  asOfDate >= birthDate + t * 10000.
  */

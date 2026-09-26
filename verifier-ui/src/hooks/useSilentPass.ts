@@ -4,6 +4,7 @@ import {
   Issuer,
   PassportAPI,
   Verifier,
+  toHex,
   type CredentialFile,
   type IdentityVerificationResult,
   type ProofReceipt,
@@ -108,7 +109,6 @@ export function useSilentPass() {
     };
   }, [api]);
 
-  // Reconcile local state against the active contract.
   useEffect(() => {
     if (!api) return;
     let cancelled = false;
@@ -179,9 +179,32 @@ export function useSilentPass() {
     () =>
       run('join', async () => {
         if (!session) return;
-        append('info', `Joining the preprod deployment ${short(contractAddress)}…`);
+        append('info', `Joining the deployment ${short(contractAddress)}…`);
         const joined = await PassportAPI.join(session.providers, contractAddress);
         setApi(joined);
+
+        // Verify if local private state holds an authorized issuer key registered in the on-chain issuer set
+        try {
+          const ps = await joined.privateState();
+          if (ps.issuerSecretKey) {
+            const { pureCircuits } = await import('silentpass-contract');
+            const localIssuerPkBytes = pureCircuits.publicKey(ps.issuerSecretKey);
+            const localIssuerPk = toHex(localIssuerPkBytes);
+            const ledger = await joined.ledgerState();
+            const isAuth = ledger.issuers ? ledger.issuers.member(localIssuerPkBytes) : false;
+            setIsIssuer(Boolean(isAuth));
+            if (isAuth) {
+              append('ok', `Verified authorized issuer status (${short(localIssuerPk)})`);
+            } else {
+              append('plain', 'Joined as standard holder/verifier (not a registered issuer on this contract)');
+            }
+          } else {
+            setIsIssuer(false);
+            append('plain', 'Joined in holder mode. Verify credentials and submit zero-knowledge proofs.');
+          }
+        } catch {
+          setIsIssuer(false);
+        }
         append('ok', 'Joined the silentpass deployment');
       }),
     [run, append, session, contractAddress],
@@ -251,9 +274,14 @@ export function useSilentPass() {
     () =>
       run('issue', async () => {
         if (!issuer || !holder) return;
+        const ps = await api?.privateState();
+        if (!ps?.issuerSecretKey) {
+          append('err', 'Cannot issue credential: This session does not have an authorized issuer secret key.');
+          return;
+        }
         append('info', 'Enrolling holder (secret key stays on this device)…');
         const enrollment = await holder.enroll();
-        append('info', 'Issuer attests → writing ONLY a commitment on-chain…');
+        append('info', 'Issuer attesting and deduping personhood → writing commitment on-chain…');
         if (!holderName.trim()) {
           append('err', 'Enter the holder name (verify a document first) before issuing.');
           return;
@@ -262,6 +290,7 @@ export function useSilentPass() {
           issuer.issueCredential(
             { name: holderName.trim(), birthDate, country: Number(country), accredited },
             { publicKey: enrollment.publicKey, enrollmentNullifier: enrollment.enrollmentNullifier },
+            { deduplicateIdentity: true },
           ),
           150_000,
           'Issue',

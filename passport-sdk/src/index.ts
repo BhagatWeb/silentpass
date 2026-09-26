@@ -34,5 +34,6 @@ export {
   fromYyyymmdd,
   nameHash,
   normalizeName,
+  derivePersonhoodNullifier,
 } from './encoding.js';
 export * from './types.js';

@@ -22,7 +22,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [walletStatus, setWalletStatus] = useState<'checking' | 'detected' | 'not-found'>('checking');
   const [session, setSession] = useState<ConnectedSession | null>(null);
-  const [networkId, setNetworkIdState] = useState<string>('preview');
+  const [networkId, setNetworkIdState] = useState<string>('preprod');
   const connectingRef = useRef(false);
 
   // Poll for wallet injection
@@ -76,7 +76,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       }
 
       let api: any;
-      let requested = targetNetwork ?? networkId ?? 'preview';
+      let requested = targetNetwork ?? networkId ?? 'preprod';
 
       try {
         api = await wallet.connect(requested);
@@ -95,7 +95,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       }
 
       const sess = await createConnectedSession(api);
-      const activeNet = sess.networkId || requested || 'preview';
+      const activeNet = sess.networkId || requested || 'preprod';
       setNetworkIdState(activeNet);
       setSession(sess);
       setAddress(sess.unshieldedAddress);

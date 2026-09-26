@@ -125,13 +125,17 @@ function CredentialPanel({ ctl }: { ctl: SilentPassController }) {
             </div>
           </div>
 
-          <button className="btn btn--primary btn--block" style={{ marginTop: 16 }} onClick={ctl.issue} disabled={locked || !ctl.isIssuer || busy !== null}>
+          <button
+            className="btn btn--primary btn--block"
+            style={{ marginTop: 16 }}
+            onClick={ctl.issue}
+            disabled={locked || !ctl.isIssuer || busy !== null}
+          >
             {busy === 'issue' ? <span className="spinner" /> : null}Issue credential
           </button>
           {ctl.api && !ctl.isIssuer && (
-            <p className="panel__desc" style={{ marginTop: 10 }}>
-              This wallet joined the shared contract, which it cannot issue on. Use "Deploy your own
-              contract" in step 01 to become the Issuer, then issue here.
+            <p className="panel__desc" style={{ marginTop: 10, color: 'var(--amber, #f59e0b)' }}>
+              This wallet joined as a credential holder/verifier. To issue, deploy your own contract or connect with a registered issuer key.
             </p>
           )}
         </>

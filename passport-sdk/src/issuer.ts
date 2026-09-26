@@ -37,7 +37,8 @@ export class Issuer {
    */
   async issueCredential(
     attributes: CredentialAttributes,
-    subject: { publicKey: string | Uint8Array; enrollmentNullifier: string | Uint8Array },
+    subject: { publicKey: string | Uint8Array; enrollmentNullifier?: string | Uint8Array },
+    options?: { deduplicateIdentity?: boolean },
   ): Promise<CredentialFile> {
     const birthDate = yyyymmdd(attributes.birthDate);
     const country = BigInt(attributes.country ?? 0);
@@ -45,7 +46,19 @@ export class Issuer {
     const nh = await nameHash(attributes.name);
 
     const subjectPk = asBytes(subject.publicKey);
-    const enrollNullifier = asBytes(subject.enrollmentNullifier);
+    // If deduplicateIdentity is enabled (production mode), the issuer derives the
+    // enrollmentNullifier deterministically from verified identity attributes.
+    // Otherwise it defaults to the subject's key-derived nullifier.
+    let enrollNullifier: Uint8Array;
+    if (options?.deduplicateIdentity) {
+      const { derivePersonhoodNullifier } = await import('./encoding.js');
+      enrollNullifier = await derivePersonhoodNullifier(attributes.name, birthDate, Number(country));
+    } else if (subject.enrollmentNullifier) {
+      enrollNullifier = asBytes(subject.enrollmentNullifier);
+    } else {
+      const { derivePersonhoodNullifier } = await import('./encoding.js');
+      enrollNullifier = await derivePersonhoodNullifier(attributes.name, birthDate, Number(country));
+    }
     const salt = randomBytes(32);
 
     const attrsHash = pureCircuits.attributesHash(birthDate, country, accredited, nh);

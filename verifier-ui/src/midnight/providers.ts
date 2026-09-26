@@ -15,6 +15,7 @@ import {
   type Proof,
   type SignatureEnabled,
   Transaction,
+  CostModel,
   type FinalizedTransaction,
   type TransactionId,
 } from '@midnight-ntwrk/midnight-js-protocol/ledger';
@@ -42,8 +43,19 @@ export interface WalletSession {
 }
 
 export const initializeWalletSession = async (): Promise<WalletSession> => {
-  const networkId = (import.meta.env.VITE_NETWORK_ID as string | undefined) ?? 'preview';
-  const connectedAPI = await connectToWallet(networkId);
+  let networkId = (import.meta.env.VITE_NETWORK_ID as string | undefined) ?? 'preprod';
+  let connectedAPI;
+  try {
+    connectedAPI = await connectToWallet(networkId);
+  } catch (err: any) {
+    const match = err?.message?.match(/Wallet is on (\w+)/i);
+    if (match && match[1]) {
+      networkId = match[1].toLowerCase();
+      connectedAPI = await connectToWallet(networkId);
+    } else {
+      throw err;
+    }
+  }
 
   const config = await connectedAPI.getConfiguration();
 
@@ -60,18 +72,48 @@ export const initializeWalletSession = async (): Promise<WalletSession> => {
     );
   }
 
+  const proverUri =
+    (import.meta.env.VITE_PROVER_URI as string | undefined) ??
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:6300'
+      : config.proverServerUri);
+
   const zkConfigProvider = new FetchZkConfigProvider<PassportCircuitKeys>(
     window.location.origin,
     fetch.bind(window),
   );
 
+  let walletProvingProvider: any = null;
+  try {
+    if (typeof (connectedAPI as any).getProvingProvider === 'function') {
+      walletProvingProvider = await (connectedAPI as any).getProvingProvider(zkConfigProvider);
+    }
+  } catch (err) {
+    console.warn('connectedAPI.getProvingProvider:', err);
+  }
+
+  const httpProofProvider = httpClientProofProvider(proverUri, zkConfigProvider);
+
+  const proofProvider = {
+    async proveTx(unprovenTx: any, _config?: any) {
+      if (walletProvingProvider) {
+        try {
+          return await unprovenTx.prove(walletProvingProvider, CostModel.initialCostModel());
+        } catch (err) {
+          console.warn('[ProofProvider] wallet provingProvider failed, trying direct proof server:', err);
+        }
+      }
+      return await httpProofProvider.proveTx(unprovenTx, _config);
+    },
+  };
+
   const providers: PassportProviders = {
     privateStateProvider: localStoragePrivateStateProvider<
       typeof passportPrivateStateId,
       PassportPrivateState
-    >(),
+    >(() => shieldedAddresses.shieldedCoinPublicKey || shieldedAddresses.shieldedEncryptionPublicKey),
     zkConfigProvider,
-    proofProvider: httpClientProofProvider(config.proverServerUri, zkConfigProvider),
+    proofProvider: proofProvider as any,
     publicDataProvider: indexerPublicDataProvider(config.indexerUri, config.indexerWsUri),
     walletProvider: {
       getCoinPublicKey(): string {
@@ -82,13 +124,23 @@ export const initializeWalletSession = async (): Promise<WalletSession> => {
       },
       balanceTx: async (tx: UnboundTransaction, ttl?: Date): Promise<FinalizedTransaction> => {
         void ttl;
-        const received = await connectedAPI.balanceUnsealedTransaction(toHex(tx.serialize()));
-        return Transaction.deserialize<SignatureEnabled, Proof, Binding>(
-          'signature',
-          'proof',
-          'binding',
-          fromHex(received.tx),
-        );
+        try {
+          const received = await connectedAPI.balanceUnsealedTransaction(toHex(tx.serialize()));
+          return Transaction.deserialize<SignatureEnabled, Proof, Binding>(
+            'signature',
+            'proof',
+            'binding',
+            fromHex(received.tx),
+          );
+        } catch (err: any) {
+          const rawMsg = err?.message ?? String(err);
+          if (rawMsg.toLowerCase().includes('dust') || rawMsg.toLowerCase().includes('balance failed')) {
+            throw new Error(
+              `Balance failed: Wallet DUST is not ready. In your wallet (Lace / 1AM on Preprod), ensure DUST generation is active (Tokens → tNIGHT → Generate DUST) and wait 1–2 minutes for DUST coins to accrue, or wait for locked coins to refresh, then retry.`
+            );
+          }
+          throw err;
+        }
       },
     },
     midnightProvider: {
@@ -105,7 +157,7 @@ export const initializeWalletSession = async (): Promise<WalletSession> => {
     networkId,
     indexerUri: config.indexerUri,
     indexerWsUri: config.indexerWsUri,
-    proverServerUri: config.proverServerUri,
+    proverServerUri: proverUri,
     shieldedCoinPublicKey: shieldedAddresses.shieldedCoinPublicKey,
   };
 };

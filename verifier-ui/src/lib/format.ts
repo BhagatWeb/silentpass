@@ -6,7 +6,7 @@ export const getActiveNetwork = (): string => {
     const stored = localStorage.getItem('DEPLOYED_NETWORK_ID');
     if (stored) return stored;
   }
-  return import.meta.env.VITE_NETWORK_ID || 'preview';
+  return import.meta.env.VITE_NETWORK_ID || 'preprod';
 };
 
 export const EXPLORER =

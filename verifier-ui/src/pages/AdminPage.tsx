@@ -30,7 +30,7 @@ function getCompiledContract() {
 
 export default function AdminPage() {
   const { session, isConnected, connect, networkId, disconnect } = useWallet();
-  const [targetNetwork, setTargetNetwork] = useState<'preview' | 'preprod'>('preview');
+  const [targetNetwork, setTargetNetwork] = useState<'preview' | 'preprod'>('preprod');
   const [status, setStatus] = useState<'idle' | 'preparing' | 'signing' | 'submitting' | 'deployed' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [deployedAddress, setDeployedAddress] = useState<string | null>(
@@ -100,10 +100,9 @@ export default function AdminPage() {
         }
       }
 
-      // Save to localStorage for instant dynamic pickup across the dApp
+      // Save contract address to localStorage for dynamic pickup across the dApp
       setDeployedAddress(contractAddress);
       localStorage.setItem('DEPLOYED_CONTRACT_ADDRESS', contractAddress);
-      localStorage.setItem('DEPLOYED_ISSUER_SECRET_KEY', toHex(skBytes));
       localStorage.setItem('DEPLOYED_NETWORK_ID', session.networkId || targetNetwork);
 
       setStatus('deployed');
