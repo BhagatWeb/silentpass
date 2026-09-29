@@ -164,14 +164,29 @@ Zero-knowledge proofs are generated locally by the user. An observer or verifier
 * **CI/CD Automation**: Configured GitHub Actions workflow ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) executing dependency installation, contract compilation checks, TypeScript builds, and test suites with passing runs.
 * **Privacy Model Documentation**: Formalized complete specification detailing public vs private ledger boundaries.
 
-### Level 4: Waxing Gibbous - MVP and Contract Logic
+### Level 4: Waxing Gibbous - MVP, Security Hardening and Full Lifecycle
 * **Production Contract Circuits**:
   - **Residency Verification (`proveResidency`)**: Proves ISO 3166-1 country code match without revealing birthdate, name, or keys.
   - **Accreditation Verification (`proveAccredited`)**: Proves accredited investor qualification bit without disclosing underlying assets.
   - **Composite Eligibility (`proveEligibility`)**: Multi-predicate gate validating age threshold, jurisdiction whitelist, and accreditation status simultaneously in a single zero-knowledge proof.
   - **Issuer Governance (`removeIssuer`)**: Administrative circuit to revoke compromised authority keys.
-* **Multi-Network Support**: Live deployments maintained and tested on both Preprod and Preview.
-* **Public Social Presence**: Official announcement and demonstration thread published on X: [Launch Post on X](https://x.com/silentpassmid/status/2098406980679553426?s=20).
+* **Verification Gateway & Executable Tests**:
+  - Fixed verifier resolution in [`server/src/verify.ts`](server/src/verify.ts), establishing direct connections to `Verifier.connect(contractAddress)`.
+  - Added standalone executable gateway test suite [`server/test/gateway.test.ts`](server/test/gateway.test.ts) (8 passing tests) executing endpoint validation, contract resolution, bound session validation, and health checks.
+* **Cross-Context Session ID Binding**:
+  - Bound session IDs cryptographically to `(venue, policy, fresh challenge)` via domain-separated SHA-256 (`zkp:session:v2:${venue}:${policy}:${challenge}`) to prevent cross-context replay between distinct verifiers or policies.
+* **Issuer Trust Model & Mandatory Personhood Deduplication**:
+  - Formalized trust boundaries: authorized issuers are governed on-chain via the `admin` key.
+  - Enforced mandatory real-world identity deduplication for personhood claims: `derivePersonhoodNullifier(name, birthDate, country)` maps directly to the on-chain `enrollmentNullifiers` set. Duplicate attempts with different keypairs are rejected at the contract level.
+* **Holder Private State Encryption & Threat Modeling**:
+  - Implemented client-side **AES-GCM (256-bit)** private state encryption key-derived via **PBKDF2-SHA256 (100,000 iterations)** with random salt and IV.
+  - Export and import encrypted offline backups with passphrase authentication.
+  - Documented backup, recovery, and physical device-compromise threat model, with instant on-chain revocation acting as an irreversible cryptographic kill switch.
+* **Full Credential Lifecycle & Live-Chain Preprod Tests**:
+  - Automated test suite in [`passport-sdk/src/lifecycle.test.mjs`](passport-sdk/src/lifecycle.test.mjs) verifying the complete lifecycle: enrollment -> commitment -> prior successful verification -> issuer revocation -> post-revocation in-circuit assertion failure.
+  - Live-chain tests validating deployed Preprod contract state (`9d85e7b71df758f53c2782b2e1cfe513c2ca6ffb4d8f7ef2f94cfd38cd46501a`) via the Midnight indexer.
+* **Product Page Community Stream & Social Presence**:
+  - Added live `ProductUpdates` component on the product page featuring recent weekly development posts, 1-click tweet copy, and direct links to the official X profile: [@silentpassmid on X](https://x.com/silentpassmid) and [Launch Post on X](https://x.com/silentpassmid/status/2098406980679553426?s=20).
 
 ---
 
@@ -190,6 +205,55 @@ Midnight uses the Kachina model for zero-knowledge smart contracts, strictly iso
 2. **Exact Age or Birthdate**: The verifier and chain learn only that `asOfDate >= birthDate + threshold * 10000`. Users of different birth years produce indistinguishable valid proofs.
 3. **Unlinkability Across Venues**: Scoped nullifiers (`scopedNullifier(sk, scope)`) prevent cross-application correlation. Activity at Venue A cannot be linked to Venue B.
 4. **Issuance-to-Proof Linkability**: The proof verifies valid credential existence against the commitment tree without exposing the commitment index or wallet address.
+
+---
+
+## Issuer Trust Model & Identity Deduplication
+
+### 1. Governance and Authority
+The contract `admin` maintains the set of trusted verification authorities (`issuers.member(issuerPk)`). New issuers can be registered via `addIssuer` and compromised authorities can be immediately stripped of issuing privileges via `removeIssuer`.
+
+### 2. Sybil-Resistant Personhood Claims
+In anonymous zero-knowledge systems, a malicious user could generate 100 distinct secret keypairs and request 100 credentials. To guarantee true personhood (one human = one credential):
+* **Mandatory Deduplication**: For personhood credentials, the issuer derives `enrollmentNullifier` deterministically from verified real-world KYC identity attributes:
+  ```text
+  enrollNullifier = SHA-256("zkp:personhood:" + normalize(name) + ":" + birthDate + ":" + country)
+  ```
+* **On-Chain Enforcement**: The Compact smart contract checks:
+  ```compact
+  assert(!enrollmentNullifiers.member(dNullifier), "credential already issued for this enrollment");
+  ```
+  If the same human tries to enroll with a second wallet or keypair, the transaction reverts on-chain.
+* **Separation of Powers**: The issuer CANNOT impersonate the user or create fraudulent proofs because proof generation requires the holder's private `userSecretKey`.
+
+---
+
+## Session ID Binding & Cross-Context Security
+
+To prevent cross-context acceptance (where a verification performed for Venue A under Policy 1 is intercepted or replayed at Venue B under Policy 2), session IDs are cryptographically bound:
+```text
+sessionId = SHA-256("zkp:session:v2:" + venue.toLowerCase() + ":" + policy.toLowerCase() + ":" + challenge)
+```
+* **Venue Isolation**: Verifying age 18+ for `casino.com` produces a different session ID than for `dao.org`.
+* **Policy Isolation**: Proving age 18+ cannot be accepted as proof for age 21+.
+* **Freshness**: The verifier issues a random nonce challenge ensuring zero replay window.
+
+---
+
+## Holder Private State Encryption & Device Compromise Threat Model
+
+### 1. Client-Side Encryption at Rest
+All private credentials held by the user (secret key, birthdate, country, accredited status, name hash, commitment salt) are encrypted using **AES-GCM (256-bit key)**. The encryption key is derived using **PBKDF2-SHA256 with 100,000 iterations** from a user-controlled passphrase and cryptographically random salt.
+
+### 2. Backup and Recovery
+Users can export an encrypted JSON backup envelope containing `kdf`, `salt`, `iv`, and `ciphertext`. Restoring the credential onto a new machine requires the user's passphrase.
+
+### 3. Device Compromise Threat Model
+| Threat Scenario | Attack Vector | SilentPass Defense & Cryptographic Mitigation |
+| :--- | :--- | :--- |
+| **Device Theft / Unlocked Laptop** | Malware or physical actor reads disk storage | Private state is encrypted with AES-256-GCM. An attacker without the passphrase cannot read attributes or keys. |
+| **Targeted Key Compromise** | Attacker extracts holder secret key | The holder contacts the issuing authority. The issuer issues an on-chain `revoke(revNullifier)` transaction using the credential's private salt. |
+| **Post-Revocation Proof Attempt** | Compromised credential used at any dApp | The Compact circuit enforces `assert(!revocationNullifiers.member(disclose(revNul)))`. The circuit instantly fails across all verifiers without revealing who was revoked. |
 
 ---
 
