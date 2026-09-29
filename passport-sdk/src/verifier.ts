@@ -7,7 +7,16 @@ import type {
   IdentityVerificationResult,
   UniqueHumanVerificationResult,
 } from './types.js';
-import { asBytes, daysBetween, fromYyyymmdd, newSessionId, toHex } from './encoding.js';
+import {
+  asBytes,
+  daysBetween,
+  fromYyyymmdd,
+  newSessionId,
+  toHex,
+  bindSessionId,
+  verifySessionBinding,
+  type SessionBinding,
+} from './encoding.js';
 import { PREPROD, type PassportNetworkConfig } from './config.js';
 
 /**
@@ -40,6 +49,15 @@ export class Verifier {
     return newSessionId();
   }
 
+  /** Creates a fresh session id cryptographically bound to venue, policy, and fresh challenge. */
+  async newBoundSession(
+    venue: string,
+    policy: string,
+    challenge?: string | Uint8Array,
+  ): Promise<{ sessionId: string; venue: string; policy: string; challenge: string }> {
+    return bindSessionId(venue, policy, challenge);
+  }
+
   private async ledgerState(): Promise<Ledger> {
     return firstValueFrom(
       this.publicDataProvider
@@ -58,7 +76,19 @@ export class Verifier {
     sessionId: string | Uint8Array,
     minThreshold = 18,
     maxSkewDays = 2,
+    expectedBinding?: SessionBinding,
   ): Promise<AgeVerificationResult> {
+    const sidHex = typeof sessionId === 'string' ? sessionId : toHex(sessionId);
+    if (expectedBinding) {
+      const isValid = await verifySessionBinding(sidHex, expectedBinding);
+      if (!isValid) {
+        return {
+          verified: false,
+          reason: 'sessionId does not match expected venue, policy, or challenge binding',
+        };
+      }
+    }
+
     const state = await this.ledgerState();
     const key = asBytes(sessionId);
 
@@ -104,7 +134,19 @@ export class Verifier {
     sessionId: string | Uint8Array,
     minThreshold = 18,
     maxSkewDays = 2,
+    expectedBinding?: SessionBinding,
   ): Promise<IdentityVerificationResult> {
+    const sidHex = typeof sessionId === 'string' ? sessionId : toHex(sessionId);
+    if (expectedBinding) {
+      const isValid = await verifySessionBinding(sidHex, expectedBinding);
+      if (!isValid) {
+        return {
+          verified: false,
+          reason: 'sessionId does not match expected venue, policy, or challenge binding',
+        };
+      }
+    }
+
     const state = await this.ledgerState();
     const key = asBytes(sessionId);
 
@@ -132,7 +174,21 @@ export class Verifier {
    * (enforce one-account-per-human by rejecting a nullifier you've seen before);
    * different scopes are unlinkable.
    */
-  async verifyUniqueHuman(sessionId: string | Uint8Array): Promise<UniqueHumanVerificationResult> {
+  async verifyUniqueHuman(
+    sessionId: string | Uint8Array,
+    expectedBinding?: SessionBinding,
+  ): Promise<UniqueHumanVerificationResult> {
+    const sidHex = typeof sessionId === 'string' ? sessionId : toHex(sessionId);
+    if (expectedBinding) {
+      const isValid = await verifySessionBinding(sidHex, expectedBinding);
+      if (!isValid) {
+        return {
+          verified: false,
+          reason: 'sessionId does not match expected venue, policy, or challenge binding',
+        };
+      }
+    }
+
     const state = await this.ledgerState();
     const key = asBytes(sessionId);
 

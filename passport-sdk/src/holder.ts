@@ -1,7 +1,18 @@
 import { pureCircuits } from 'silentpass-contract';
 import type { PassportAPI } from './api.js';
 import type { CredentialFile, ProofReceipt } from './types.js';
-import { asBytes, fromHex, nameHash, newSessionId, randomBytes, scopeToBytes, toHex, yyyymmdd } from './encoding.js';
+import {
+  asBytes,
+  decryptHolderState,
+  encryptHolderState,
+  fromHex,
+  nameHash,
+  newSessionId,
+  randomBytes,
+  scopeToBytes,
+  toHex,
+  yyyymmdd,
+} from './encoding.js';
 
 /**
  * Holder role: owns a credential in private state and proves predicates about
@@ -82,6 +93,38 @@ export class Holder {
   async hasCredential(): Promise<boolean> {
     const ps = await this.api.privateState();
     return ps.credential !== undefined;
+  }
+
+  /** Returns the current private state (holder secret key + credential opening). */
+  async exportState() {
+    return this.api.privateState();
+  }
+
+  /** Sets the private state directly into the provider. */
+  async importState(state: Parameters<PassportAPI['setPrivateState']>[0]): Promise<void> {
+    await this.api.setPrivateState(state);
+  }
+
+  /**
+   * Exports an AES-GCM (256-bit) encrypted backup of the holder's private state,
+   * key-derived with PBKDF2 (100,000 iterations) from the user's passphrase.
+   *
+   * @param passphrase User-provided passphrase.
+   */
+  async exportEncryptedState(passphrase: string): Promise<string> {
+    const state = await this.api.privateState();
+    return encryptHolderState(state, passphrase);
+  }
+
+  /**
+   * Decrypts and restores an encrypted private state backup into the provider.
+   *
+   * @param encryptedBlob JSON envelope produced by exportEncryptedState.
+   * @param passphrase User-provided passphrase.
+   */
+  async importEncryptedState(encryptedBlob: string, passphrase: string): Promise<void> {
+    const state = await decryptHolderState(encryptedBlob, passphrase);
+    await this.api.setPrivateState(state);
   }
 
   /**

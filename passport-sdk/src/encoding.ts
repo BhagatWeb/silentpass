@@ -88,3 +88,181 @@ export const fromYyyymmdd = (value: number | bigint): Date => {
 /** Whole calendar days between two dates (a - b). */
 export const daysBetween = (a: Date, b: Date): number =>
   Math.round((a.getTime() - b.getTime()) / 86_400_000);
+
+export interface SessionBinding {
+  venue: string;
+  policy: string;
+  challenge: string;
+}
+
+/**
+ * Cryptographically binds a 32-byte sessionId to a venue, policy, and fresh challenge
+ * via domain-separated SHA-256 to prevent cross-context replay and cross-application acceptance.
+ */
+export const bindSessionId = async (
+  venue: string,
+  policy: string,
+  challenge?: string | Uint8Array,
+): Promise<{ sessionId: string; venue: string; policy: string; challenge: string }> => {
+  const challengeHex = challenge
+    ? (typeof challenge === 'string' ? challenge : toHex(challenge))
+    : toHex(randomBytes(16));
+  const normVenue = venue.trim().toLowerCase();
+  const normPolicy = policy.trim().toLowerCase();
+  const tag = `zkp:session:v2:${normVenue}:${normPolicy}:${challengeHex}`;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tag));
+  const sessionId = toHex(new Uint8Array(digest));
+  return {
+    sessionId,
+    venue: normVenue,
+    policy: normPolicy,
+    challenge: challengeHex,
+  };
+};
+
+/**
+ * Verifies that a given sessionId correctly binds to the specified venue, policy, and challenge.
+ */
+export const verifySessionBinding = async (
+  sessionId: string,
+  binding: { venue: string; policy: string; challenge: string },
+): Promise<boolean> => {
+  const derived = await bindSessionId(binding.venue, binding.policy, binding.challenge);
+  return sessionId.toLowerCase() === derived.sessionId.toLowerCase();
+};
+
+/**
+ * Serializes and encrypts holder private state using AES-GCM (256-bit) and PBKDF2.
+ */
+export const encryptHolderState = async (
+  state: unknown,
+  passphrase: string,
+): Promise<string> => {
+  if (!passphrase || passphrase.length < 6) {
+    throw new Error('Passphrase must be at least 6 characters.');
+  }
+  const salt = randomBytes(16);
+  const iv = randomBytes(12);
+
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(passphrase),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey'],
+  );
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: salt as unknown as BufferSource,
+      iterations: 100_000,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt'],
+  );
+
+  const serialized = JSON.stringify(state, (_key, val) => {
+    if (val instanceof Uint8Array) {
+      return { __u8: toHex(val) };
+    }
+    if (typeof val === 'bigint') {
+      return { __big: val.toString() };
+    }
+    return val;
+  });
+
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: iv as unknown as BufferSource },
+    key,
+    enc.encode(serialized),
+  );
+
+  return JSON.stringify({
+    version: 1,
+    cipher: 'AES-GCM-256',
+    kdf: 'PBKDF2-SHA256-100K',
+    salt: toHex(salt),
+    iv: toHex(iv),
+    ciphertext: toHex(new Uint8Array(ciphertext)),
+  });
+};
+
+/**
+ * Decrypts and deserializes holder private state previously encrypted with encryptHolderState.
+ */
+export const decryptHolderState = async <T = any>(
+  encryptedBlob: string,
+  passphrase: string,
+): Promise<T> => {
+  let envelope: {
+    version: number;
+    salt: string;
+    iv: string;
+    ciphertext: string;
+  };
+  try {
+    envelope = JSON.parse(encryptedBlob);
+  } catch {
+    throw new Error('Invalid encrypted state format: JSON parse failure.');
+  }
+
+  if (!envelope.salt || !envelope.iv || !envelope.ciphertext) {
+    throw new Error('Invalid encrypted state envelope: missing salt, iv, or ciphertext.');
+  }
+
+  const salt = fromHex(envelope.salt);
+  const iv = fromHex(envelope.iv);
+  const ciphertext = fromHex(envelope.ciphertext);
+
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(passphrase),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey'],
+  );
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: salt as unknown as BufferSource,
+      iterations: 100_000,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt'],
+  );
+
+  let decryptedBuffer: ArrayBuffer;
+  try {
+    decryptedBuffer = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv as unknown as BufferSource },
+      key,
+      ciphertext as unknown as BufferSource,
+    );
+  } catch {
+    throw new Error('Decryption failed: incorrect passphrase or corrupted data.');
+  }
+
+  const dec = new TextDecoder();
+  const jsonStr = dec.decode(decryptedBuffer);
+
+  return JSON.parse(jsonStr, (_key, val) => {
+    if (val && typeof val === 'object') {
+      if (typeof val.__u8 === 'string') {
+        return new Uint8Array(fromHex(val.__u8));
+      }
+      if (typeof val.__big === 'string') {
+        return BigInt(val.__big);
+      }
+    }
+    return val;
+  }) as T;
+};
+

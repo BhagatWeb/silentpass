@@ -23,7 +23,7 @@
 export { PassportAPI } from './api.js';
 export { Issuer } from './issuer.js';
 export { Holder } from './holder.js';
-export { Verifier } from './verifier.js';
+export { Verifier, Verifier as Venue } from './verifier.js';
 export { PREPROD, PREVIEW, type PassportNetworkConfig } from './config.js';
 export {
   newSessionId,
@@ -35,5 +35,11 @@ export {
   nameHash,
   normalizeName,
   derivePersonhoodNullifier,
+  bindSessionId,
+  verifySessionBinding,
+  encryptHolderState,
+  decryptHolderState,
+  type SessionBinding,
 } from './encoding.js';
 export * from './types.js';
+

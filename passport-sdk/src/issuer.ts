@@ -1,12 +1,35 @@
 import { pureCircuits } from 'silentpass-contract';
 import type { PassportAPI } from './api.js';
 import type { CredentialAttributes, CredentialFile } from './types.js';
-import { asBytes, nameHash, randomBytes, toHex, yyyymmdd } from './encoding.js';
+import {
+  asBytes,
+  derivePersonhoodNullifier,
+  nameHash,
+  randomBytes,
+  toHex,
+  yyyymmdd,
+} from './encoding.js';
 
 /**
  * Issuer role: attests real-world attributes after off-chain verification
  * (KYC, document check, proof-of-personhood — whatever the deployment demands)
  * and records ONLY an opaque commitment on-chain.
+ *
+ * ISSUER TRUST MODEL:
+ * 1. Authority: Issuers are registered on-chain in the `issuers` set governed by
+ *    the contract admin (`addIssuer`, `removeIssuer`).
+ * 2. Data Minimization: The issuer performs verification off-chain and NEVER submits
+ *    raw documents or personal attributes (name, DOB, nationality) to the ledger.
+ * 3. Personhood & Sybil Resistance: For personhood claims (unique human checks),
+ *    real-world identity deduplication is an EXPLICIT, MANDATORY requirement. The
+ *    issuer derives the on-chain enrollment nullifier deterministically from verified
+ *    real-world identity attributes (`derivePersonhoodNullifier`). If a human attempts to
+ *    enroll multiple times using different keypairs, the on-chain contract rejects
+ *    duplicate nullifiers (`assert(!enrollmentNullifiers.member(dNullifier))`).
+ * 4. Revocation: The issuer holds the commitment opening salt and can revoke a credential
+ *    by publishing `revocationNullifier(commitment, salt)` without exposing user identity.
+ * 5. Soundness: Issuers cannot forge proofs for users because proof generation requires
+ *    the user's private key (`userSecretKey`), which is never shared with the issuer.
  */
 export class Issuer {
   constructor(private readonly api: PassportAPI) {}
@@ -27,36 +50,54 @@ export class Issuer {
   }
 
   /**
+   * Issues a credential with explicit, mandatory real-world identity deduplication
+   * required for Sybil-resistant personhood claims.
+   */
+  async issuePersonhoodCredential(
+    attributes: CredentialAttributes,
+    subject: { publicKey: string | Uint8Array; enrollmentNullifier?: string | Uint8Array },
+  ): Promise<CredentialFile> {
+    return this.issueCredential(attributes, subject, {
+      deduplicateIdentity: true,
+      requirePersonhoodDedup: true,
+    });
+  }
+
+  /**
    * Issues a credential for a subject the issuer has verified off-chain.
    *
    * The subject supplies their public key and humanity nullifier (both derived
    * from their secret, which they never share). The chain records only the
    * commitment and the nullifier — never the attributes.
    *
+   * @param attributes Verified attributes (name, birthDate, country, accredited).
+   * @param subject Subject public key and optional enrollment nullifier.
+   * @param options.deduplicateIdentity Derive enrollment nullifier deterministically from identity attributes.
+   * @param options.requirePersonhoodDedup Explicitly require identity deduplication for personhood claims.
    * @returns The credential file to hand to the subject over a private channel.
    */
   async issueCredential(
     attributes: CredentialAttributes,
     subject: { publicKey: string | Uint8Array; enrollmentNullifier?: string | Uint8Array },
-    options?: { deduplicateIdentity?: boolean },
+    options?: { deduplicateIdentity?: boolean; requirePersonhoodDedup?: boolean },
   ): Promise<CredentialFile> {
+    if (!attributes.name || !attributes.name.trim()) {
+      throw new Error('Credential requires a verified legal name.');
+    }
     const birthDate = yyyymmdd(attributes.birthDate);
     const country = BigInt(attributes.country ?? 0);
     const accredited = attributes.accredited ?? false;
     const nh = await nameHash(attributes.name);
 
     const subjectPk = asBytes(subject.publicKey);
-    // If deduplicateIdentity is enabled (production mode), the issuer derives the
-    // enrollmentNullifier deterministically from verified identity attributes.
-    // Otherwise it defaults to the subject's key-derived nullifier.
+    // Real-world identity deduplication is mandatory for personhood claims to prevent
+    // sybil multi-enrollment across distinct keypairs for the same human.
     let enrollNullifier: Uint8Array;
-    if (options?.deduplicateIdentity) {
-      const { derivePersonhoodNullifier } = await import('./encoding.js');
+    if (options?.requirePersonhoodDedup || options?.deduplicateIdentity) {
       enrollNullifier = await derivePersonhoodNullifier(attributes.name, birthDate, Number(country));
     } else if (subject.enrollmentNullifier) {
       enrollNullifier = asBytes(subject.enrollmentNullifier);
     } else {
-      const { derivePersonhoodNullifier } = await import('./encoding.js');
       enrollNullifier = await derivePersonhoodNullifier(attributes.name, birthDate, Number(country));
     }
     const salt = randomBytes(32);
