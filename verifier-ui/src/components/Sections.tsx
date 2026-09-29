@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { contractUrl } from '../lib/format.js';
 import { CodeWindow } from './Code.js';
 
@@ -174,6 +175,117 @@ export function Docs() {
             <div className="doc__k">documentation</div>
             <div className="doc__big">Guides and API reference.</div>
             <div className="doc__cta">Read the docs</div>
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const DISPATCH_POSTS = [
+  {
+    id: '1',
+    date: '1 day ago',
+    tag: 'Security & Integrity',
+    title: 'Cross-Context Session Binding & Replay Prevention',
+    content: '🔐 Security Upgrade: SilentPass session IDs are now cryptographically bound to (venue, policy, fresh challenge) via domain-separated SHA-256. A zero-knowledge proof produced for Venue A cannot be accepted or replayed at Venue B. Complete cross-context isolation. #ZeroKnowledge #MidnightNetwork',
+    url: 'https://x.com/silentpassmid/status/2098406980679553426?s=20',
+  },
+  {
+    id: '2',
+    date: '3 days ago',
+    tag: 'Holder Privacy',
+    title: 'Client-Side AES-256-GCM Private State & Device Recovery',
+    content: '🛡️ Holder Privacy & Recovery: Added client-side AES-GCM (256-bit) encryption key-derived via PBKDF2 (100,000 iterations). Back up your private credentials securely off-device. Lost a device? On-chain revocation instantly invalidates it across all apps without doxxing your identity. #Web3Privacy #ZK',
+    url: 'https://x.com/silentpassmid',
+  },
+  {
+    id: '3',
+    date: '5 days ago',
+    tag: 'Proof of Personhood',
+    title: 'Real-World Identity Deduplication for Sybil Resistance',
+    content: '👤 Sybil-Resistant Personhood: How to guarantee one credential per human without keeping IDs on-chain? Our Issuer Trust Model derives deterministic enrollment nullifiers from verified real-world identity attributes. 1 human = 1 credential. Unique humanity proven with per-dApp scoped nullifiers. #Identity',
+    url: 'https://x.com/silentpassmid',
+  },
+  {
+    id: '4',
+    date: '6 days ago',
+    tag: 'Live Preprod Testnet',
+    title: 'Full Credential Lifecycle & On-Chain Revocation Verified',
+    content: '⚡ Live on Midnight Preprod (9d85e7b71d…): Full credential lifecycle verified against indexers: enrollment -> issuance -> successful verification (verified ✓) -> issuer revocation -> immediate in-circuit assertion rejection on subsequent entry. Verifiable on-chain now! #MidnightPreprod',
+    url: 'https://preprod.midnightexplorer.com/contracts/9d85e7b71df758f53c2782b2e1cfe513c2ca6ffb4d8f7ef2f94cfd38cd46501a',
+  },
+];
+
+export function ProductUpdates() {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2500);
+  };
+
+  return (
+    <section className="section" id="updates">
+      <div className="wrap">
+        <div className="section__head center" data-reveal>
+          <p className="kicker">Product Updates & Community Dispatch</p>
+          <h2>Fresh from the Lab & @silentpassmid on X</h2>
+          <p>
+            Zero-knowledge privacy moves fast. Here are the latest architectural upgrades,
+            security guarantees, and live Preprod developments shipped by the SilentPass team.
+          </p>
+        </div>
+
+        <div className="updates-grid" data-reveal-group>
+          {DISPATCH_POSTS.map((post) => (
+            <article className="update-card" data-reveal key={post.id}>
+              <div>
+                <div className="update-card__top">
+                  <span className="update-card__tag">{post.tag}</span>
+                  <span className="update-card__date">{post.date}</span>
+                </div>
+                <h3>{post.title}</h3>
+                <p>{post.content}</p>
+              </div>
+              <div className="update-card__foot">
+                <a
+                  className="update-card__link"
+                  href={post.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>View on X ↗</span>
+                </a>
+                <button
+                  type="button"
+                  className="update-card__copy"
+                  onClick={() => handleCopy(post.id, post.content)}
+                >
+                  {copiedId === post.id ? '✓ Copied!' : 'Copy Post'}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="social-bar" data-reveal>
+          <a
+            className="btn btn--primary"
+            href="https://x.com/silentpassmid"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Follow @silentpassmid on X
+          </a>
+          <a
+            className="btn btn--secondary"
+            href="https://x.com/silentpassmid/status/2098406980679553426?s=20"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Read the Official Launch Thread
           </a>
         </div>
       </div>
